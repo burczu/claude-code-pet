@@ -1,17 +1,17 @@
 import { useEffect, useReducer } from 'react';
-import { StyleSheet, Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import CalcButton from '../components/CalcButton';
 import ScientificPanel from '../components/ScientificPanel';
 import { ACTIONS, calculatorReducer, initialState } from '../calculator/reducer';
 import { formatNumber } from '../calculator/formatNumber';
 import { THEMES } from '../theme/colors';
+import { useSettings } from '../store/SettingsContext';
+import { pushHistory } from '../services/historyService';
 
 const GAP = 12;
 const COLS = 4;
-const HISTORY_KEY = '@calc_history';
 
 const BUTTONS = [
   { label: 'AC',  type: 'function', action: { type: ACTIONS.CLEAR } },
@@ -42,8 +42,8 @@ const BUTTONS = [
 export default function MainScreen() {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
   const { width, height } = useWindowDimensions();
-  const colorScheme = useColorScheme();
-  const theme = THEMES[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { resolvedScheme, settings } = useSettings();
+  const theme = THEMES[resolvedScheme];
   const isLandscape = width > height;
 
   const calcWidth = isLandscape ? width * 0.65 : width;
@@ -53,12 +53,7 @@ export default function MainScreen() {
   useEffect(() => {
     if (!state.overwrite || state.operator !== null || state.previous !== null) return;
     if (state.current === '0' || state.current === 'Error') return;
-
-    AsyncStorage.getItem(HISTORY_KEY).then((raw) => {
-      const history = raw ? JSON.parse(raw) : [];
-      history.unshift({ result: state.current, date: new Date().toISOString() });
-      AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 50)));
-    });
+    pushHistory('', state.current);
   }, [state.current, state.overwrite]);
 
   const swipe = Gesture.Pan()
@@ -110,6 +105,7 @@ export default function MainScreen() {
                 wide={btn.wide}
                 buttonSize={buttonSize}
                 theme={theme}
+                hapticsEnabled={settings.hapticsEnabled}
                 onPress={() => dispatch(btn.action)}
               />
             ))}
@@ -121,14 +117,8 @@ export default function MainScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-  },
-  row: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-  },
+  safe: { flex: 1 },
+  row: { flex: 1, flexDirection: 'row', alignItems: 'flex-end' },
   display: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -136,18 +126,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
-  expression: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
+  expression: { fontSize: 24, marginBottom: 4 },
   current: {
     fontSize: 80,
     fontWeight: '200',
     width: '100%',
     textAlign: 'right',
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
 });

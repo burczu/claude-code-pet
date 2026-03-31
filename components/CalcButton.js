@@ -2,12 +2,11 @@ import { memo } from 'react';
 import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
-function handlePress(onPress) {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  onPress();
-}
-
-function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize, theme }) {
+function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize, theme, hapticsEnabled = true }) {
+  function handlePress() {
+    if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  }
   const bg = {
     number:     theme?.numberBtn     ?? '#333',
     operator:   theme?.operatorBtn   ?? '#ff9f0a',
@@ -26,7 +25,7 @@ function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize,
 
   return (
     <Pressable
-      onPress={() => handlePress(onPress)}
+      onPress={handlePress}
       android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
       style={({ pressed }) => [
         styles.button,
