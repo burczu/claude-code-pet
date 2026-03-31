@@ -2,8 +2,10 @@ import { memo, useCallback, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
@@ -13,7 +15,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
-import { Clock, Hash, Palette, Sun, Vibrate } from 'lucide-react-native';
+import { ChevronRight, Clock, Hash, Info, Palette, Share2, Star, Sun, Vibrate } from 'lucide-react-native';
 import { useSettings } from '../store/SettingsContext';
 import { clearHistory, getHistory } from '../services/historyService';
 import { THEMES } from '../theme/colors';
@@ -59,15 +61,20 @@ function SectionCard({ children, theme }) {
   );
 }
 
-function SettingRow({ icon, label, children, theme, last = false }) {
+function SettingRow({ icon, label, children, theme, last = false, onPress }) {
+  const Container = onPress ? TouchableOpacity : View;
   return (
-    <View style={[styles.row, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.separator }]}>
+    <Container
+      onPress={onPress}
+      activeOpacity={0.6}
+      style={[styles.row, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.separator }]}
+    >
       <View style={styles.rowLeft}>
         {icon}
         <Text style={[styles.rowLabel, { color: theme.historyText }]}>{label}</Text>
       </View>
       <View style={styles.rowRight}>{children}</View>
-    </View>
+    </Container>
   );
 }
 
@@ -104,6 +111,19 @@ export default function SettingsScreen() {
   const handleItemPress = useCallback((result) => {
     navigation.navigate('Home', { initialValue: result });
   }, [navigation]);
+
+  const handleShareHistory = useCallback(async () => {
+    if (history.length === 0) return;
+    const text = history
+      .map((item) => {
+        const dateStr = item.timestamp
+          ? new Date(item.timestamp).toLocaleString()
+          : item.date ? new Date(item.date).toLocaleString() : '';
+        return `${item.result}  —  ${dateStr}`;
+      })
+      .join('\n');
+    Share.share({ message: `My Calculator History:\n\n${text}` });
+  }, [history]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top']}>
@@ -178,6 +198,38 @@ export default function SettingsScreen() {
                   maximumTrackTintColor={theme.separator}
                   thumbTintColor={settings.accentColor}
                 />
+              </SettingRow>
+            </SectionCard>
+
+            {/* ── More ── */}
+            <Text style={[styles.sectionTitle, { color: theme.historySubText }]}>MORE</Text>
+            <SectionCard theme={theme}>
+              <SettingRow
+                icon={<Share2 size={18} color={history.length === 0 ? theme.separator : settings.accentColor} />}
+                label="Share History"
+                theme={theme}
+                onPress={history.length > 0 ? handleShareHistory : undefined}
+              >
+                <ChevronRight size={18} color={history.length === 0 ? theme.separator : theme.historySubText} />
+              </SettingRow>
+
+              <SettingRow
+                icon={<Star size={18} color={settings.accentColor} />}
+                label="Rate App"
+                theme={theme}
+                onPress={() => Linking.openURL('https://apps.apple.com')}
+              >
+                <ChevronRight size={18} color={theme.historySubText} />
+              </SettingRow>
+
+              <SettingRow
+                icon={<Info size={18} color={settings.accentColor} />}
+                label="About"
+                theme={theme}
+                last
+                onPress={() => Alert.alert('Calculator', 'Version 1.0.0\nBuilt with Expo & React Native')}
+              >
+                <ChevronRight size={18} color={theme.historySubText} />
               </SettingRow>
             </SectionCard>
 

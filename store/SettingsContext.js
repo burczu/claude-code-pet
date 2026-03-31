@@ -8,7 +8,7 @@ SplashScreen.preventAutoHideAsync();
 const SETTINGS_KEY = '@calc_settings';
 
 const DEFAULTS = {
-  theme: 'system',       // 'light' | 'dark' | 'system'
+  theme: 'system',
   accentColor: '#ff9f0a',
   hapticsEnabled: true,
   precision: 10,
@@ -18,6 +18,9 @@ const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULTS);
+  const [systemScheme, setSystemScheme] = useState(
+    Appearance.getColorScheme() ?? 'light'
+  );
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -31,18 +34,22 @@ export function SettingsProvider({ children }) {
       });
   }, []);
 
+  useEffect(() => {
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      setSystemScheme(colorScheme ?? 'light');
+    });
+    return () => sub.remove();
+  }, []);
+
   const updateSetting = useCallback(async (key, value) => {
-    const next = (prev) => {
+    setSettings((prev) => {
       const updated = { ...prev, [key]: value };
       AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
       return updated;
-    };
-    setSettings(next);
+    });
   }, []);
 
-  const resolvedScheme = settings.theme === 'system'
-    ? (Appearance.getColorScheme() ?? 'light')
-    : settings.theme;
+  const resolvedScheme = settings.theme === 'system' ? systemScheme : settings.theme;
 
   return (
     <SettingsContext.Provider value={{ settings, updateSetting, resolvedScheme, ready }}>
