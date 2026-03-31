@@ -38,7 +38,8 @@ const ROWS = [
   ],
 ];
 
-function ScientificButton({ label, onPress, buttonSize, theme, active, dimmed }) {
+function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, active, dimmed }) {
+  const h = buttonHeight ?? buttonSize * 0.72;
   return (
     <Pressable
       onPress={onPress}
@@ -46,21 +47,21 @@ function ScientificButton({ label, onPress, buttonSize, theme, active, dimmed })
         styles.btn,
         {
           width: buttonSize,
-          height: buttonSize * 0.72,
+          height: h,
           borderRadius: 6,
           backgroundColor: active ? theme.scientificText : theme.scientificBtn,
           opacity: dimmed ? 0.35 : pressed ? 0.6 : 1,
         },
       ]}
     >
-      <Text style={[styles.label, { color: active ? theme.scientificBtn : theme.scientificText, fontSize: buttonSize * 0.28 }]}>
+      <Text style={[styles.label, { color: active ? theme.scientificBtn : theme.scientificText, fontSize: Math.min(buttonSize, h) * 0.28 }]}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
-export default memo(function ScientificPanel({ dispatch, buttonSize, theme, angleMode, memory }) {
+export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeight, theme, angleMode, memory }) {
   const [second, setSecond] = useState(false);
   const hasMemory = memory !== '0';
 
@@ -82,7 +83,7 @@ export default memo(function ScientificPanel({ dispatch, buttonSize, theme, angl
   }
 
   return (
-    <View style={[styles.panel, { gap: buttonSize * 0.12 }]}>
+    <View style={[styles.panel, { gap: 12 }]}>
       {ROWS.map((row, ri) => (
         <View key={ri} style={[styles.row, { gap: buttonSize * 0.12 }]}>
           {row.map((btn, ci) => {
@@ -98,6 +99,7 @@ export default memo(function ScientificPanel({ dispatch, buttonSize, theme, angl
                 key={ci}
                 label={label}
                 buttonSize={buttonSize}
+                buttonHeight={buttonHeight}
                 theme={theme}
                 active={isSecondActive}
                 dimmed={isMemoryDimmed}

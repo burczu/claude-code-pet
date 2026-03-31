@@ -1,7 +1,7 @@
-import { useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import CalcButton from '../components/CalcButton';
 import ScientificPanel from '../components/ScientificPanel';
@@ -45,6 +45,12 @@ export default function MainScreen() {
   const { width, height } = useWindowDimensions();
   const { resolvedScheme, settings } = useSettings();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
+  const [container, setContainer] = useState({ width: 0, height: 0 });
+  const onLayout = useCallback((e) => {
+    const { width: w, height: h } = e.nativeEvent.layout;
+    setContainer({ width: w, height: h });
+  }, []);
 
   useEffect(() => {
     const value = route.params?.initialValue;
@@ -59,10 +65,25 @@ export default function MainScreen() {
   const isLandscape = width > height;
 
   const SCI_COLS = 4;
+  const ROWS = 5;
+  // Use measured container size (accounts for tab bar, safe areas, nav chrome).
+  // Fall back to window-based estimate before first layout fires.
+  const cw = container.width  || (width  - insets.left - insets.right);
+  const ch = container.height || (height - insets.top  - insets.bottom - 83); // 83 ≈ tab bar
+
   const sciPanelRatio = isLandscape ? 0.45 : 0;
-  const calcWidth = isLandscape ? width * (1 - sciPanelRatio) : width;
+  const calcWidth = isLandscape ? cw * (1 - sciPanelRatio) : cw;
+
+  // Width-based: how wide each button can be given the column count
   const buttonSize = (calcWidth - GAP * (COLS + 1)) / COLS;
-  const sciButtonSize = isLandscape ? (width * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS : 0;
+  // Height-based: how tall each button can be to fit all rows (48px reserved for display)
+  const buttonHeight = isLandscape
+    ? (ch - 48 - 12 - GAP * (ROWS + 1)) / ROWS  // 12 = paddingTop on row
+    : buttonSize;
+
+  const sciButtonSize = isLandscape
+    ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS
+    : 0;
 
   useEffect(() => {
     if (!state.overwrite || state.operator !== null || state.previous !== null) return;
@@ -83,12 +104,13 @@ export default function MainScreen() {
     : '';
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'bottom']}>
-      <View style={styles.row}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'bottom', 'left', 'right']}>
+      <View style={[styles.row, isLandscape && styles.rowLandscape]} onLayout={onLayout}>
         {isLandscape && (
           <ScientificPanel
             dispatch={dispatch}
             buttonSize={sciButtonSize}
+            buttonHeight={buttonHeight}
             theme={theme}
             angleMode={state.angleMode}
             memory={state.memory}
@@ -128,6 +150,7 @@ export default function MainScreen() {
                 type={btn.type}
                 wide={btn.wide}
                 buttonSize={buttonSize}
+                buttonHeight={buttonHeight}
                 theme={theme}
                 hapticsEnabled={settings.hapticsEnabled}
                 onPress={() => dispatch(btn.action)}
@@ -143,6 +166,7 @@ export default function MainScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   row: { flex: 1, flexDirection: 'row', alignItems: 'flex-end' },
+  rowLandscape: { paddingTop: 12 },
   display: {
     flex: 1,
     justifyContent: 'flex-end',

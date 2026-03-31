@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
-function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize, theme, hapticsEnabled = true }) {
+function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize, buttonHeight, theme, hapticsEnabled = true }) {
   function handlePress() {
     if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
@@ -21,6 +21,7 @@ function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize,
     scientific: theme?.scientificText ?? '#fff',
   }[type];
 
+  const h = buttonHeight ?? buttonSize;
   const width = wide ? buttonSize * 2 + 12 : buttonSize;
 
   return (
@@ -31,14 +32,14 @@ function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize,
         styles.button,
         {
           width,
-          height: buttonSize,
-          borderRadius: buttonSize / 2,
+          height: h,
+          borderRadius: Math.min(width, h) / 2,
           backgroundColor: bg,
           opacity: Platform.OS === 'ios' && pressed ? 0.7 : 1,
         },
       ]}
     >
-      <Text style={[styles.label, { color: textColor, fontSize: buttonSize * 0.38 }]}>
+      <Text style={[styles.label, { color: textColor, fontSize: h * 0.38 }]}>
         {label}
       </Text>
     </Pressable>
