@@ -58,9 +58,11 @@ export default function MainScreen() {
   const theme = { ...THEMES[resolvedScheme], operatorBtn: settings.accentColor };
   const isLandscape = width > height;
 
-  const calcWidth = isLandscape ? width * 0.65 : width;
+  const SCI_COLS = 4;
+  const sciPanelRatio = isLandscape ? 0.45 : 0;
+  const calcWidth = isLandscape ? width * (1 - sciPanelRatio) : width;
   const buttonSize = (calcWidth - GAP * (COLS + 1)) / COLS;
-  const sciButtonSize = isLandscape ? (width * 0.35 - GAP * 3) / 2 : 0;
+  const sciButtonSize = isLandscape ? (width * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS : 0;
 
   useEffect(() => {
     if (!state.overwrite || state.operator !== null || state.previous !== null) return;
@@ -88,12 +90,22 @@ export default function MainScreen() {
             dispatch={dispatch}
             buttonSize={sciButtonSize}
             theme={theme}
+            angleMode={state.angleMode}
+            memory={state.memory}
           />
         )}
 
         <View style={{ flex: 1 }}>
           <GestureDetector gesture={swipe}>
             <View style={styles.display}>
+              <View style={styles.indicators}>
+                {state.memory !== '0' && (
+                  <Text style={[styles.indicator, { color: theme.expressionText }]}>M</Text>
+                )}
+                {isLandscape && state.angleMode === 'rad' && (
+                  <Text style={[styles.indicator, { color: theme.expressionText }]}>RAD</Text>
+                )}
+              </View>
               <Text style={[styles.expression, { color: theme.expressionText }]} numberOfLines={1}>
                 {expressionText}
               </Text>
@@ -138,6 +150,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
+  indicators: { flexDirection: 'row', gap: 8, alignSelf: 'flex-end', marginBottom: 2 },
+  indicator: { fontSize: 13, fontWeight: '500' },
   expression: { fontSize: 24, marginBottom: 4 },
   current: {
     fontSize: 80,

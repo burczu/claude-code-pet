@@ -1,41 +1,131 @@
-import { StyleSheet, View } from 'react-native';
-import CalcButton from './CalcButton';
+import { memo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ACTIONS } from '../calculator/reducer';
 
-const SCIENTIFIC_BUTTONS = [
-  { label: 'sin', fn: 'sin' },
-  { label: 'cos', fn: 'cos' },
-  { label: 'tan', fn: 'tan' },
-  { label: 'log', fn: 'log' },
-  { label: 'ln',  fn: 'ln'  },
-  { label: '√',   fn: '√'   },
-  { label: 'x²',  fn: 'x²'  },
-  { label: '1/x', fn: '1/x' },
+// Each button: primary and secondary (2nd-mode) variants.
+// action kinds: 'fn' | 'op' | 'constant' | 'toggle_angle' | 'toggle_second'
+//               'memory_add' | 'memory_sub' | 'memory_recall' | 'memory_clear'
+const ROWS = [
+  [
+    { pl: '2nd',  sl: '2nd',    pa: { kind: 'toggle_second' },               sa: { kind: 'toggle_second' } },
+    { pl: 'x²',   sl: '√x',     pa: { kind: 'fn', fn: 'x²' },               sa: { kind: 'fn', fn: '√' } },
+    { pl: 'x³',   sl: '³√x',    pa: { kind: 'fn', fn: 'x³' },               sa: { kind: 'fn', fn: '³√' } },
+    { pl: 'xʸ',   sl: 'ʸ√x',    pa: { kind: 'op', op: 'xʸ' },              sa: { kind: 'op', op: 'y√x' } },
+  ],
+  [
+    { pl: '1/x',  sl: '1/x',    pa: { kind: 'fn', fn: '1/x' },              sa: { kind: 'fn', fn: '1/x' } },
+    { pl: 'eˣ',   sl: 'ln',      pa: { kind: 'fn', fn: 'eˣ' },              sa: { kind: 'fn', fn: 'ln' } },
+    { pl: '10ˣ',  sl: 'log',     pa: { kind: 'fn', fn: '10ˣ' },             sa: { kind: 'fn', fn: 'log' } },
+    { pl: 'x!',   sl: 'x!',      pa: { kind: 'fn', fn: 'x!' },              sa: { kind: 'fn', fn: 'x!' } },
+  ],
+  [
+    { pl: 'sin',  sl: 'sin⁻¹',  pa: { kind: 'fn', fn: 'sin' },              sa: { kind: 'fn', fn: 'asin' } },
+    { pl: 'cos',  sl: 'cos⁻¹',  pa: { kind: 'fn', fn: 'cos' },              sa: { kind: 'fn', fn: 'acos' } },
+    { pl: 'tan',  sl: 'tan⁻¹',  pa: { kind: 'fn', fn: 'tan' },              sa: { kind: 'fn', fn: 'atan' } },
+    { pl: 'Deg',  sl: 'Deg',     pa: { kind: 'toggle_angle' },               sa: { kind: 'toggle_angle' }, angleLabel: true },
+  ],
+  [
+    { pl: 'sinh', sl: 'sinh⁻¹', pa: { kind: 'fn', fn: 'sinh' },             sa: { kind: 'fn', fn: 'asinh' } },
+    { pl: 'cosh', sl: 'cosh⁻¹', pa: { kind: 'fn', fn: 'cosh' },             sa: { kind: 'fn', fn: 'acosh' } },
+    { pl: 'tanh', sl: 'tanh⁻¹', pa: { kind: 'fn', fn: 'tanh' },             sa: { kind: 'fn', fn: 'atanh' } },
+    { pl: 'π',    sl: 'π',       pa: { kind: 'constant', constant: 'π' },   sa: { kind: 'constant', constant: 'π' } },
+  ],
+  [
+    { pl: 'mc',   sl: 'mc',      pa: { kind: 'memory_clear' },               sa: { kind: 'memory_clear' }, memoryBtn: true },
+    { pl: 'm+',   sl: 'm+',      pa: { kind: 'memory_add' },                 sa: { kind: 'memory_add' }, memoryBtn: true },
+    { pl: 'm−',   sl: 'm−',      pa: { kind: 'memory_sub' },                 sa: { kind: 'memory_sub' }, memoryBtn: true },
+    { pl: 'mr',   sl: 'mr',      pa: { kind: 'memory_recall' },              sa: { kind: 'memory_recall' }, memoryBtn: true },
+  ],
 ];
 
-export default function ScientificPanel({ dispatch, buttonSize, theme }) {
+function ScientificButton({ label, onPress, buttonSize, theme, active, dimmed }) {
   return (
-    <View style={styles.panel}>
-      {SCIENTIFIC_BUTTONS.map((btn) => (
-        <CalcButton
-          key={btn.fn}
-          label={btn.label}
-          type="scientific"
-          buttonSize={buttonSize}
-          theme={theme}
-          onPress={() => dispatch({ type: ACTIONS.SCIENTIFIC_FN, fn: btn.fn })}
-        />
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.btn,
+        {
+          width: buttonSize,
+          height: buttonSize * 0.72,
+          borderRadius: 6,
+          backgroundColor: active ? theme.scientificText : theme.scientificBtn,
+          opacity: dimmed ? 0.35 : pressed ? 0.6 : 1,
+        },
+      ]}
+    >
+      <Text style={[styles.label, { color: active ? theme.scientificBtn : theme.scientificText, fontSize: buttonSize * 0.28 }]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+export default memo(function ScientificPanel({ dispatch, buttonSize, theme, angleMode, memory }) {
+  const [second, setSecond] = useState(false);
+  const hasMemory = memory !== '0';
+
+  function handlePress(btn) {
+    const action = second ? btn.sa : btn.pa;
+
+    switch (action.kind) {
+      case 'toggle_second': setSecond((s) => !s); return;
+      case 'fn':            dispatch({ type: ACTIONS.SCIENTIFIC_FN, fn: action.fn }); break;
+      case 'op':            dispatch({ type: ACTIONS.CHOOSE_OPERATION, operator: action.op }); break;
+      case 'constant':      dispatch({ type: ACTIONS.INSERT_CONSTANT, constant: action.constant }); break;
+      case 'toggle_angle':  dispatch({ type: ACTIONS.TOGGLE_ANGLE }); break;
+      case 'memory_clear':  dispatch({ type: ACTIONS.MEMORY_CLEAR }); break;
+      case 'memory_add':    dispatch({ type: ACTIONS.MEMORY_ADD }); break;
+      case 'memory_sub':    dispatch({ type: ACTIONS.MEMORY_SUB }); break;
+      case 'memory_recall': dispatch({ type: ACTIONS.MEMORY_RECALL }); break;
+    }
+    setSecond(false);
+  }
+
+  return (
+    <View style={[styles.panel, { gap: buttonSize * 0.12 }]}>
+      {ROWS.map((row, ri) => (
+        <View key={ri} style={[styles.row, { gap: buttonSize * 0.12 }]}>
+          {row.map((btn, ci) => {
+            const isAngleBtn = btn.angleLabel;
+            const label = isAngleBtn
+              ? angleMode.toUpperCase()
+              : second ? btn.sl : btn.pl;
+            const isSecondActive = btn.pa.kind === 'toggle_second' && second;
+            const isMemoryDimmed = btn.memoryBtn && !hasMemory && (btn.pa.kind === 'memory_clear' || btn.pa.kind === 'memory_recall');
+
+            return (
+              <ScientificButton
+                key={ci}
+                label={label}
+                buttonSize={buttonSize}
+                theme={theme}
+                active={isSecondActive}
+                dimmed={isMemoryDimmed}
+                onPress={() => handlePress(btn)}
+              />
+            );
+          })}
+        </View>
       ))}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   panel: {
     flexDirection: 'column',
     justifyContent: 'flex-end',
     paddingBottom: 12,
-    gap: 12,
     paddingHorizontal: 8,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  btn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontWeight: '400',
   },
 });
