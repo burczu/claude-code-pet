@@ -6,6 +6,8 @@ export const initialState = {
   previous: null,
   operator: null,
   overwrite: false,
+  memory: '0',
+  angleMode: 'deg',
 };
 
 export const ACTIONS = {
@@ -16,6 +18,12 @@ export const ACTIONS = {
   EVALUATE: 'EVALUATE',
   PERCENT: 'PERCENT',
   SCIENTIFIC_FN: 'SCIENTIFIC_FN',
+  TOGGLE_ANGLE: 'TOGGLE_ANGLE',
+  INSERT_CONSTANT: 'INSERT_CONSTANT',
+  MEMORY_ADD: 'MEMORY_ADD',
+  MEMORY_SUB: 'MEMORY_SUB',
+  MEMORY_RECALL: 'MEMORY_RECALL',
+  MEMORY_CLEAR: 'MEMORY_CLEAR',
 };
 
 export function calculatorReducer(state, action) {
@@ -55,7 +63,7 @@ export function calculatorReducer(state, action) {
     }
 
     case ACTIONS.CLEAR:
-      return { ...initialState };
+      return { ...initialState, memory: state.memory, angleMode: state.angleMode };
 
     case ACTIONS.DELETE_DIGIT: {
       if (state.overwrite || state.current === 'Error') {
@@ -98,9 +106,39 @@ export function calculatorReducer(state, action) {
 
     case ACTIONS.SCIENTIFIC_FN: {
       if (state.current === 'Error') return state;
-      const result = applyScientific(state.current, action.fn);
-      return { current: result, previous: null, operator: null, overwrite: true };
+      const result = applyScientific(state.current, action.fn, state.angleMode);
+      return { ...state, current: result, previous: null, operator: null, overwrite: true };
     }
+
+    case ACTIONS.TOGGLE_ANGLE:
+      return { ...state, angleMode: state.angleMode === 'deg' ? 'rad' : 'deg' };
+
+    case ACTIONS.INSERT_CONSTANT: {
+      const constants = { π: String(Math.PI), e: String(Math.E) };
+      const value = constants[action.constant];
+      if (!value) return state;
+      return { ...state, current: value, overwrite: true };
+    }
+
+    case ACTIONS.MEMORY_ADD: {
+      if (state.current === 'Error') return state;
+      try {
+        return { ...state, memory: new Big(state.memory).plus(new Big(state.current)).toFixed() };
+      } catch { return state; }
+    }
+
+    case ACTIONS.MEMORY_SUB: {
+      if (state.current === 'Error') return state;
+      try {
+        return { ...state, memory: new Big(state.memory).minus(new Big(state.current)).toFixed() };
+      } catch { return state; }
+    }
+
+    case ACTIONS.MEMORY_RECALL:
+      return { ...state, current: state.memory, overwrite: true };
+
+    case ACTIONS.MEMORY_CLEAR:
+      return { ...state, memory: '0' };
 
     default:
       return state;
