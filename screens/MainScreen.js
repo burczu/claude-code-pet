@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import CalcButton from '../components/CalcButton';
@@ -43,6 +44,17 @@ export default function MainScreen() {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
   const { width, height } = useWindowDimensions();
   const { resolvedScheme, settings } = useSettings();
+  const route = useRoute();
+
+  useEffect(() => {
+    const value = route.params?.initialValue;
+    if (value) {
+      dispatch({ type: ACTIONS.CLEAR });
+      String(value).split('').forEach((digit) => {
+        dispatch({ type: ACTIONS.ADD_DIGIT, digit });
+      });
+    }
+  }, [route.params?.initialValue]);
   const theme = THEMES[resolvedScheme];
   const isLandscape = width > height;
 
