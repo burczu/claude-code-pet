@@ -55,7 +55,7 @@ export default function MainScreen() {
       });
     }
   }, [route.params?.initialValue]);
-  const theme = THEMES[resolvedScheme];
+  const theme = { ...THEMES[resolvedScheme], operatorBtn: settings.accentColor };
   const isLandscape = width > height;
 
   const calcWidth = isLandscape ? width * 0.65 : width;
