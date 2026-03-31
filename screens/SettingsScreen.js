@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -19,6 +19,7 @@ import { ChevronRight, Clock, Hash, Info, Palette, Share2, Star, Sun, Vibrate } 
 import { useSettings } from '../store/SettingsContext';
 import { clearHistory, getHistory } from '../services/historyService';
 import { THEMES } from '../theme/colors';
+import { formatNumber } from '../calculator/formatNumber';
 
 const ACCENT_COLORS = [
   '#ff9f0a', '#ff3b30', '#34c759', '#007aff',
@@ -31,7 +32,7 @@ const THEME_OPTIONS = [
   { label: 'System', value: 'system' },
 ];
 
-const HistoryItem = memo(function HistoryItem({ item, onPress, theme }) {
+const HistoryItem = memo(function HistoryItem({ item, onPress, theme, precision }) {
   const dateStr = item.timestamp
     ? new Date(item.timestamp).toLocaleString()
     : item.date ? new Date(item.date).toLocaleString() : '';
@@ -47,21 +48,23 @@ const HistoryItem = memo(function HistoryItem({ item, onPress, theme }) {
           {item.equation}
         </Text>
       ) : null}
-      <Text style={[styles.historyResult, { color: theme.historyText }]}>{item.result}</Text>
+      <Text style={[styles.historyResult, { color: theme.historyText }]}>
+        {formatNumber(item.result, precision)}
+      </Text>
       <Text style={[styles.date, { color: theme.historySubText }]}>{dateStr}</Text>
     </TouchableOpacity>
   );
 });
 
-function SectionCard({ children, theme }) {
+const SectionCard = memo(function SectionCard({ children, theme }) {
   return (
     <View style={[styles.card, { backgroundColor: theme.historyBg }]}>
       {children}
     </View>
   );
-}
+});
 
-function SettingRow({ icon, label, children, theme, last = false, onPress }) {
+const SettingRow = memo(function SettingRow({ icon, label, children, theme, last = false, onPress }) {
   const Container = onPress ? TouchableOpacity : View;
   return (
     <Container
@@ -76,7 +79,7 @@ function SettingRow({ icon, label, children, theme, last = false, onPress }) {
       <View style={styles.rowRight}>{children}</View>
     </Container>
   );
-}
+});
 
 export default function SettingsScreen() {
   const [history, setHistory] = useState([]);
@@ -125,13 +128,7 @@ export default function SettingsScreen() {
     Share.share({ message: `My Calculator History:\n\n${text}` });
   }, [history]);
 
-  return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top']}>
-      <FlatList
-        data={history}
-        keyExtractor={(item, index) => item.id ?? String(index)}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
-        ListHeaderComponent={
+  const listHeader = useMemo(() => (
           <View>
             {/* ── Appearance ── */}
             <Text style={[styles.sectionTitle, { color: theme.historySubText, marginTop: 4 }]}>APPEARANCE</Text>
@@ -248,7 +245,15 @@ export default function SettingsScreen() {
               )}
             </View>
           </View>
-        }
+  ), [settings, theme, history.length, updateSetting, handleShareHistory, handleClearAll]);
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top']}>
+      <FlatList
+        data={history}
+        keyExtractor={(item, index) => item.id ?? String(index)}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 16 }}
+        ListHeaderComponent={listHeader}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={[styles.emptyText, { color: theme.historySubText }]}>No calculations yet</Text>
@@ -258,7 +263,7 @@ export default function SettingsScreen() {
           <View style={[styles.separator, { backgroundColor: theme.separator }]} />
         )}
         renderItem={({ item }) => (
-          <HistoryItem item={item} onPress={handleItemPress} theme={theme} />
+          <HistoryItem item={item} onPress={handleItemPress} theme={theme} precision={settings.precision} />
         )}
       />
     </SafeAreaView>

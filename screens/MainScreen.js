@@ -77,7 +77,7 @@ export default function MainScreen() {
     });
 
   const expressionText = state.previous && state.operator
-    ? `${formatNumber(state.previous)} ${state.operator}`
+    ? `${formatNumber(state.previous, settings.precision)} ${state.operator}`
     : '';
 
   return (
@@ -103,7 +103,7 @@ export default function MainScreen() {
                 numberOfLines={1}
                 minimumFontScale={0.4}
               >
-                {formatNumber(state.current)}
+                {formatNumber(state.current, settings.precision)}
               </Text>
             </View>
           </GestureDetector>
