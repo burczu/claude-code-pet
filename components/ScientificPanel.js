@@ -61,7 +61,7 @@ function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, act
   );
 }
 
-export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeight, theme, angleMode, memory }) {
+export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeight, theme, angleMode = 'deg', memory = '0' }) {
   const [second, setSecond] = useState(false);
   const hasMemory = memory !== '0';
 

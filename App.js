@@ -1,3 +1,4 @@
+import { useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -9,11 +10,14 @@ import SettingsScreen from './screens/SettingsScreen';
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SettingsProvider>
         <NavigationContainer>
-          <Tab.Navigator screenOptions={{ animation: 'shift' }}>
+          <Tab.Navigator screenOptions={{ animation: 'shift', tabBarStyle: isLandscape ? { height: 50, paddingBottom: 4, paddingTop: 3 } : undefined }}>
             <Tab.Screen
               name="Home"
               component={MainScreen}

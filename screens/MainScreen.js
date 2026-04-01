@@ -78,7 +78,7 @@ export default function MainScreen() {
   const buttonSize = (calcWidth - GAP * (COLS + 1)) / COLS;
   // Height-based: how tall each button can be to fit all rows (48px reserved for display)
   const buttonHeight = isLandscape
-    ? (ch - 48 - 12 - GAP * (ROWS + 1)) / ROWS  // 12 = paddingTop on row
+    ? (ch - 72 - 12 - GAP * (ROWS + 1)) / ROWS  // 12 = paddingTop on row, 72 = display reserve
     : buttonSize;
 
   const sciButtonSize = isLandscape
@@ -119,20 +119,20 @@ export default function MainScreen() {
 
         <View style={{ flex: 1 }}>
           <GestureDetector gesture={swipe}>
-            <View style={styles.display}>
-              <View style={styles.indicators}>
+            <View style={[styles.display, isLandscape && styles.displayLandscape]}>
+              <View style={[styles.indicators, isLandscape && styles.indicatorsLandscape]}>
                 {state.memory !== '0' && (
-                  <Text style={[styles.indicator, { color: theme.expressionText }]}>M</Text>
+                  <Text style={[styles.indicator, { color: theme.expressionText }, isLandscape && styles.indicatorLandscape]}>M</Text>
                 )}
                 {isLandscape && state.angleMode === 'rad' && (
-                  <Text style={[styles.indicator, { color: theme.expressionText }]}>RAD</Text>
+                  <Text style={[styles.indicator, { color: theme.expressionText }, styles.indicatorLandscape]}>RAD</Text>
                 )}
               </View>
-              <Text style={[styles.expression, { color: theme.expressionText }]} numberOfLines={1}>
+              <Text style={[styles.expression, { color: theme.expressionText }, isLandscape && styles.expressionLandscape]} numberOfLines={1}>
                 {expressionText}
               </Text>
               <Text
-                style={[styles.current, { color: theme.currentText }]}
+                style={[styles.current, { color: theme.currentText }, isLandscape && styles.currentLandscape]}
                 adjustsFontSizeToFit
                 numberOfLines={1}
                 minimumFontScale={0.4}
@@ -174,14 +174,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
   },
+  displayLandscape: {
+    paddingBottom: 2,
+    overflow: 'hidden',
+  },
   indicators: { flexDirection: 'row', gap: 8, alignSelf: 'flex-end', marginBottom: 2 },
+  indicatorsLandscape: { marginBottom: 0 },
   indicator: { fontSize: 13, fontWeight: '500' },
+  indicatorLandscape: { fontSize: 11 },
   expression: { fontSize: 24, marginBottom: 4 },
+  expressionLandscape: { fontSize: 17, marginBottom: 0 },
   current: {
     fontSize: 80,
     fontWeight: '200',
     width: '100%',
     textAlign: 'right',
   },
+  currentLandscape: { fontSize: 38, lineHeight: 38 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
 });
