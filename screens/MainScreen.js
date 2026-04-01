@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,7 +49,7 @@ export default function MainScreen() {
   const [container, setContainer] = useState({ width: 0, height: 0 });
   const onLayout = useCallback((e) => {
     const { width: w, height: h } = e.nativeEvent.layout;
-    setContainer({ width: w, height: h });
+    setContainer((prev) => (prev.width === w && prev.height === h ? prev : { width: w, height: h }));
   }, []);
 
   useEffect(() => {
@@ -61,7 +61,10 @@ export default function MainScreen() {
       });
     }
   }, [route.params?.initialValue]);
-  const theme = { ...THEMES[resolvedScheme], operatorBtn: settings.accentColor };
+  const theme = useMemo(
+    () => ({ ...THEMES[resolvedScheme], operatorBtn: settings.accentColor }),
+    [resolvedScheme, settings.accentColor]
+  );
   const isLandscape = width > height;
 
   const SCI_COLS = 4;
@@ -85,10 +88,13 @@ export default function MainScreen() {
     ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS
     : 0;
 
+  const historyTimer = useRef(null);
   useEffect(() => {
     if (!state.overwrite || state.operator !== null || state.previous !== null) return;
     if (state.current === '0' || state.current === 'Error') return;
-    pushHistory('', state.current);
+    clearTimeout(historyTimer.current);
+    historyTimer.current = setTimeout(() => pushHistory('', state.current), 500);
+    return () => clearTimeout(historyTimer.current);
   }, [state.current, state.overwrite]);
 
   const swipe = Gesture.Pan()
@@ -99,9 +105,17 @@ export default function MainScreen() {
       }
     });
 
-  const expressionText = state.previous && state.operator
-    ? `${formatNumber(state.previous, settings.precision)} ${state.operator}`
-    : '';
+  const expressionText = useMemo(
+    () => state.previous && state.operator
+      ? `${formatNumber(state.previous, settings.precision)} ${state.operator}`
+      : '',
+    [state.previous, state.operator, settings.precision]
+  );
+
+  const buttonHandlers = useMemo(
+    () => BUTTONS.map((btn) => () => dispatch(btn.action)),
+    [dispatch]
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'bottom', 'left', 'right']}>
@@ -145,7 +159,7 @@ export default function MainScreen() {
           <View style={[styles.grid, { padding: GAP, gap: GAP }]}>
             {BUTTONS.map((btn, index) => (
               <CalcButton
-                key={index}
+                key={btn.label}
                 label={btn.label}
                 type={btn.type}
                 wide={btn.wide}
@@ -153,7 +167,7 @@ export default function MainScreen() {
                 buttonHeight={buttonHeight}
                 theme={theme}
                 hapticsEnabled={settings.hapticsEnabled}
-                onPress={() => dispatch(btn.action)}
+                onPress={buttonHandlers[index]}
               />
             ))}
           </View>

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
@@ -51,8 +51,13 @@ export function SettingsProvider({ children }) {
 
   const resolvedScheme = settings.theme === 'system' ? systemScheme : settings.theme;
 
+  const ctxValue = useMemo(
+    () => ({ settings, updateSetting, resolvedScheme, ready }),
+    [settings, updateSetting, resolvedScheme, ready]
+  );
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, resolvedScheme, ready }}>
+    <SettingsContext.Provider value={ctxValue}>
       {ready ? children : null}
     </SettingsContext.Provider>
   );

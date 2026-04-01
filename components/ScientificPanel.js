@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ACTIONS } from '../calculator/reducer';
 
@@ -65,7 +65,7 @@ export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeigh
   const [second, setSecond] = useState(false);
   const hasMemory = memory !== '0';
 
-  function handlePress(btn) {
+  const handlePress = useCallback((btn) => {
     const action = second ? btn.sa : btn.pa;
 
     switch (action.kind) {
@@ -80,7 +80,7 @@ export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeigh
       case 'memory_recall': dispatch({ type: ACTIONS.MEMORY_RECALL }); break;
     }
     setSecond(false);
-  }
+  }, [second, dispatch]);
 
   return (
     <View style={[styles.panel, { gap: 12 }]}>
@@ -96,7 +96,7 @@ export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeigh
 
             return (
               <ScientificButton
-                key={ci}
+                key={btn.pl}
                 label={label}
                 buttonSize={buttonSize}
                 buttonHeight={buttonHeight}
