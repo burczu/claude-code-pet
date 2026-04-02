@@ -12,6 +12,7 @@ export const initialState = {
 
 export const ACTIONS = {
   ADD_DIGIT: 'ADD_DIGIT',
+  ADD_EE: 'ADD_EE',
   CHOOSE_OPERATION: 'CHOOSE_OPERATION',
   CLEAR: 'CLEAR',
   DELETE_DIGIT: 'DELETE_DIGIT',
@@ -24,6 +25,8 @@ export const ACTIONS = {
   MEMORY_SUB: 'MEMORY_SUB',
   MEMORY_RECALL: 'MEMORY_RECALL',
   MEMORY_CLEAR: 'MEMORY_CLEAR',
+  PAREN_OPEN: 'PAREN_OPEN',   // Phase 3
+  PAREN_CLOSE: 'PAREN_CLOSE', // Phase 3
 };
 
 export function calculatorReducer(state, action) {
@@ -103,6 +106,15 @@ export function calculatorReducer(state, action) {
         return state;
       }
     }
+
+    case ACTIONS.ADD_EE: {
+      if (state.current === 'Error' || state.current.includes('e') || state.overwrite) return state;
+      return { ...state, current: state.current + 'e' };
+    }
+
+    case ACTIONS.PAREN_OPEN:
+    case ACTIONS.PAREN_CLOSE:
+      return state; // Phase 3
 
     case ACTIONS.SCIENTIFIC_FN: {
       if (state.current === 'Error') return state;

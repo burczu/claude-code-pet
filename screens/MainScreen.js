@@ -67,7 +67,8 @@ export default function MainScreen() {
   );
   const isLandscape = width > height;
 
-  const SCI_COLS = 4;
+  const SCI_COLS = 4;          // landscape
+  const SCI_COLS_PORTRAIT = 6; // portrait
   const ROWS = 5;
   const showScientific = settings.scientificMode;
   // Use measured container size (accounts for tab bar, safe areas, nav chrome).
@@ -98,9 +99,10 @@ export default function MainScreen() {
     ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS
     : 0;
 
-  // Portrait: scientific panel above the grid, full container width
+  // Portrait: 6-col panel, paddingHorizontal=12 each side, row gap = buttonSize*0.12
+  // Solve: 6*bs + 5*(bs*0.12) + 24 = cw → bs = (cw-24)/6.6
   const sciPortraitButtonSize = !isLandscape && showScientific
-    ? (cw - GAP * (SCI_COLS + 1)) / SCI_COLS
+    ? (cw - 24) / (SCI_COLS_PORTRAIT + (SCI_COLS_PORTRAIT - 1) * 0.12)
     : 0;
   const sciPortraitButtonHeight = portraitSciSharedHeight ?? 0;
 

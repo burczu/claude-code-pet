@@ -2,6 +2,7 @@ const FORMATTER = new Intl.NumberFormat('en-US');
 
 export function formatNumber(value, precision = 10) {
   if (!value || value === 'Error') return value;
+  if (value.includes('e')) return value; // scientific notation mid-input — show as-is
 
   const [intPart, decPart] = value.split('.');
   const formatted = FORMATTER.format(Number(intPart));
