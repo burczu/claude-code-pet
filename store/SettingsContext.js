@@ -12,6 +12,7 @@ const DEFAULTS = {
   accentColor: '#ff9f0a',
   hapticsEnabled: true,
   precision: 10,
+  scientificMode: false,
 };
 
 const SettingsContext = createContext(null);

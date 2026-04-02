@@ -69,24 +69,40 @@ export default function MainScreen() {
 
   const SCI_COLS = 4;
   const ROWS = 5;
+  const showScientific = settings.scientificMode;
   // Use measured container size (accounts for tab bar, safe areas, nav chrome).
   // Fall back to window-based estimate before first layout fires.
   const cw = container.width  || (width  - insets.left - insets.right);
   const ch = container.height || (height - insets.top  - insets.bottom - 83); // 83 ≈ tab bar
 
-  const sciPanelRatio = isLandscape ? 0.45 : 0;
-  const calcWidth = isLandscape ? cw * (1 - sciPanelRatio) : cw;
+  const sciPanelRatio = isLandscape && showScientific ? 0.45 : 0;
+  const calcWidth = isLandscape && showScientific ? cw * (1 - sciPanelRatio) : cw;
 
   // Width-based: how wide each button can be given the column count
   const buttonSize = (calcWidth - GAP * (COLS + 1)) / COLS;
-  // Height-based: how tall each button can be to fit all rows (48px reserved for display)
+
+  // Portrait scientific: share available height equally across all 10 rows (5 sci + 5 basic)
+  // Total overhead: display(120) + grid gaps(72) + sci gaps(36) = 228
+  const portraitSciDisplayHeight = 60;
+  const portraitSciSharedHeight = !isLandscape && showScientific && ch > 0
+    ? Math.max((ch - portraitSciDisplayHeight - (ROWS - 1) * GAP - 2 * GAP - (ROWS - 1) * 6 - 12) / (ROWS + ROWS), 18)
+    : null;
+
+  // Height-based: how tall each button can be to fit all rows
   const buttonHeight = isLandscape
     ? (ch - 72 - 12 - GAP * (ROWS + 1)) / ROWS  // 12 = paddingTop on row, 72 = display reserve
-    : buttonSize;
+    : (portraitSciSharedHeight ?? buttonSize);
 
-  const sciButtonSize = isLandscape
+  // Landscape: scientific panel on the left at 45% width
+  const sciButtonSize = isLandscape && showScientific
     ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS
     : 0;
+
+  // Portrait: scientific panel above the grid, full container width
+  const sciPortraitButtonSize = !isLandscape && showScientific
+    ? (cw - GAP * (SCI_COLS + 1)) / SCI_COLS
+    : 0;
+  const sciPortraitButtonHeight = portraitSciSharedHeight ?? 0;
 
   const historyTimer = useRef(null);
   useEffect(() => {
@@ -120,8 +136,9 @@ export default function MainScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'bottom', 'left', 'right']}>
       <View style={[styles.row, isLandscape && styles.rowLandscape]} onLayout={onLayout}>
-        {isLandscape && (
+        {isLandscape && showScientific && (
           <ScientificPanel
+            orientation="landscape"
             dispatch={dispatch}
             buttonSize={sciButtonSize}
             buttonHeight={buttonHeight}
@@ -131,15 +148,15 @@ export default function MainScreen() {
           />
         )}
 
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, alignSelf: 'stretch' }}>
           <GestureDetector gesture={swipe}>
-            <View style={[styles.display, isLandscape && styles.displayLandscape]}>
+            <View style={[styles.display, isLandscape && styles.displayLandscape, !isLandscape && showScientific && { flex: 0, height: portraitSciDisplayHeight }]}>
               <View style={[styles.indicators, isLandscape && styles.indicatorsLandscape]}>
                 {state.memory !== '0' && (
                   <Text style={[styles.indicator, { color: theme.expressionText }, isLandscape && styles.indicatorLandscape]}>M</Text>
                 )}
-                {isLandscape && state.angleMode === 'rad' && (
-                  <Text style={[styles.indicator, { color: theme.expressionText }, styles.indicatorLandscape]}>RAD</Text>
+                {showScientific && state.angleMode === 'rad' && (
+                  <Text style={[styles.indicator, { color: theme.expressionText }, isLandscape && styles.indicatorLandscape]}>RAD</Text>
                 )}
               </View>
               <Text style={[styles.expression, { color: theme.expressionText }, isLandscape && styles.expressionLandscape]} numberOfLines={1}>
@@ -156,7 +173,19 @@ export default function MainScreen() {
             </View>
           </GestureDetector>
 
-          <View style={[styles.grid, { padding: GAP, gap: GAP }]}>
+          {!isLandscape && showScientific && (
+            <ScientificPanel
+              orientation="portrait"
+              dispatch={dispatch}
+              buttonSize={sciPortraitButtonSize}
+              buttonHeight={sciPortraitButtonHeight}
+              theme={theme}
+              angleMode={state.angleMode}
+              memory={state.memory}
+            />
+          )}
+
+          <View style={[styles.grid, { padding: GAP, gap: GAP }, !isLandscape && showScientific && { paddingBottom: GAP / 2 }]}>
             {BUTTONS.map((btn, index) => (
               <CalcButton
                 key={btn.label}

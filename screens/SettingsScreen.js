@@ -15,7 +15,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
-import { ChevronRight, Clock, Hash, Info, Palette, Share2, Star, Sun, Vibrate } from 'lucide-react-native';
+import { ChevronRight, Clock, FlaskConical, Hash, Info, Palette, Share2, Star, Sun, Vibrate } from 'lucide-react-native';
 import { useSettings } from '../store/SettingsContext';
 import { clearHistory, getHistory } from '../services/historyService';
 import { THEMES } from '../theme/colors';
@@ -179,6 +179,14 @@ export default function SettingsScreen() {
                 <Switch
                   value={settings.hapticsEnabled}
                   onValueChange={(v) => updateSetting('hapticsEnabled', v)}
+                  trackColor={{ true: settings.accentColor }}
+                />
+              </SettingRow>
+
+              <SettingRow icon={<FlaskConical size={18} color={settings.accentColor} />} label="Scientific Mode" theme={theme}>
+                <Switch
+                  value={settings.scientificMode}
+                  onValueChange={(v) => updateSetting('scientificMode', v)}
                   trackColor={{ true: settings.accentColor }}
                 />
               </SettingRow>

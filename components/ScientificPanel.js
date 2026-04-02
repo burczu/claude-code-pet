@@ -61,7 +61,7 @@ function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, act
   );
 }
 
-export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeight, theme, angleMode = 'deg', memory = '0' }) {
+export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeight, theme, angleMode = 'deg', memory = '0', orientation = 'landscape' }) {
   const [second, setSecond] = useState(false);
   const hasMemory = memory !== '0';
 
@@ -83,7 +83,7 @@ export default memo(function ScientificPanel({ dispatch, buttonSize, buttonHeigh
   }, [second, dispatch]);
 
   return (
-    <View style={[styles.panel, { gap: 12 }]}>
+    <View style={[styles.panel, orientation === 'portrait' && styles.panelPortrait, { gap: orientation === 'portrait' ? 6 : 12 }]}>
       {ROWS.map((row, ri) => (
         <View key={ri} style={[styles.row, { gap: buttonSize * 0.12 }]}>
           {row.map((btn, ci) => {
@@ -119,6 +119,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 12,
     paddingHorizontal: 8,
+  },
+  panelPortrait: {
+    justifyContent: 'flex-start',
+    paddingTop: 8,
+    paddingBottom: 4,
+    paddingHorizontal: 12,
   },
   row: {
     flexDirection: 'row',
