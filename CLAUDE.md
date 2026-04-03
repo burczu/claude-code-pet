@@ -19,24 +19,27 @@ npx jest --watch   # Run tests in watch mode
 ### Key files
 
 - **`App.js`** — root: `GestureHandlerRootView` → `SettingsProvider` → `NavigationContainer` → bottom tabs
-- **`calculator/reducer.js`** — `useReducer` state machine; all calculator logic lives here. State shape: `{ current, previous, operator, overwrite, memory, angleMode }`
-- **`calculator/mathEngine.js`** — pure math: `evaluate(a, b, op)` for binary ops, `applyScientific(val, fn, angleMode)` for unary scientific functions. Uses `big.js` for float-safe arithmetic.
+- **`calculator/reducer.js`** — `useReducer` state machine; all calculator logic lives here. State shape: `{ current, tokens, previous, operator, overwrite, memory, angleMode }`. `tokens` is the authoritative expression `[{type:'number'|'op'|'paren', value:string}]`; `previous`/`operator` are display hints for PERCENT.
+- **`calculator/mathEngine.js`** — pure math: `evaluateTokens(tokens)` for full expression evaluation via shunting-yard, `evaluate(a, b, op)` for simple binary ops, `applyScientific(val, fn, angleMode)` for unary scientific functions. Uses `big.js` for float-safe arithmetic.
 - **`calculator/formatNumber.js`** — formats display values with `Intl.NumberFormat` thousands separators, respects `precision` setting.
-- **`store/SettingsContext.js`** — React Context persisted to AsyncStorage. Settings: `theme` (light/dark/system), `accentColor`, `hapticsEnabled`, `precision`. Holds splash screen until loaded.
+- **`store/SettingsContext.js`** — React Context persisted to AsyncStorage. Settings: `theme` (light/dark/system), `accentColor`, `hapticsEnabled`, `precision`, `scientificMode`. Holds splash screen until loaded.
 - **`theme/colors.js`** — `THEMES.light` / `THEMES.dark` token objects.
 - **`services/historyService.js`** — AsyncStorage-backed history (max 50 items, key `@calc_history`).
-- **`screens/MainScreen.js`** — calculator UI. In landscape, renders `ScientificPanel` on the left (45% width) alongside the basic 4×5 grid. Button sizing uses `onLayout` to measure actual container dimensions, then computes `buttonSize` (width, column-based) and `buttonHeight` (height, row-based) independently so all 5 rows fit in landscape.
+- **`screens/MainScreen.js`** — calculator UI. Button sizing uses `onLayout` to measure actual container dimensions, then computes `buttonSize` (width-based) and `buttonHeight` (height-based) independently. In landscape + scientific, `ScientificPanel` takes the left 45% and basic grid the remaining 55%. In portrait + scientific, panel sits between display and grid; height is shared equally across all 10 rows.
 - **`screens/SettingsScreen.js`** — settings + history. `FlatList` with a `useMemo` list header.
 - **`components/CalcButton.js`** — memoised button. Accepts separate `buttonSize` (width) and `buttonHeight` props; defaults to square when `buttonHeight` is omitted.
-- **`components/ScientificPanel.js`** — landscape-only 4-column × 5-row scientific panel. Local `second` state toggles inverse/alternate functions. Dispatches `SCIENTIFIC_FN`, `CHOOSE_OPERATION` (for `xʸ`/`y√x`), `INSERT_CONSTANT`, `TOGGLE_ANGLE`, and memory actions.
+- **`components/ScientificPanel.js`** — scientific panel with two layouts selected by `orientation` prop: landscape (4-col × 5-row) and portrait (6-col × 5-row, Apple-style). Local `second` state toggles inverse/alternate functions. Dispatches `SCIENTIFIC_FN`, `CHOOSE_OPERATION` (for `xʸ`/`y√x`), `INSERT_CONSTANT`, `TOGGLE_ANGLE`, memory actions, `ADD_EE`, `PAREN_OPEN`, `PAREN_CLOSE`.
 
-### Scientific calculator features (landscape only)
+### Scientific calculator features
 
+- **Scientific mode toggle**: `settings.scientificMode` gates panel in both orientations; portrait shows 6-col panel above grid, landscape shows 4-col panel to the left
 - **2nd toggle**: flips sin↔sin⁻¹, x²↔√x, xʸ↔ʸ√x, eˣ↔ln, 10ˣ↔log, hyperbolic inverses
 - **Angle mode**: DEG/RAD stored in reducer state (`TOGGLE_ANGLE`), survives `CLEAR`
 - **Memory**: `memory` in reducer state (session-only, not persisted); mc/m+/m−/mr
 - **Constants**: π, e via `INSERT_CONSTANT` action
 - **Binary operators**: `xʸ` and `y√x` go through `CHOOSE_OPERATION` like `+`/`−`
+- **Parentheses**: `PAREN_OPEN`/`PAREN_CLOSE` actions; depth tracked via `openParenDepth(tokens)`
+- **EE**: `ADD_EE` appends `e` to current for scientific notation input
 
 ### Testing
 
