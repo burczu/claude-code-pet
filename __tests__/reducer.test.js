@@ -69,7 +69,8 @@ describe('DELETE_DIGIT', () => {
     let s = typeDigits('5');
     s = dispatch(s, { type: ACTIONS.CHOOSE_OPERATION, operator: '+' });
     s = dispatch(s, { type: ACTIONS.DELETE_DIGIT });
-    expect(s.current).toBe('0');
+    expect(s.current).toBe('5');
+    expect(s.operator).toBe(null);
   });
 });
 
@@ -81,12 +82,12 @@ describe('CHOOSE_OPERATION', () => {
     expect(s.operator).toBe('+');
   });
 
-  it('chains operations: 5 + 3 × gives 8 ×', () => {
+  it('chains operations: 5 + 3 × appends to tokens without eager eval', () => {
     let s = typeDigits('5');
     s = dispatch(s, { type: ACTIONS.CHOOSE_OPERATION, operator: '+' });
     s = typeDigits('3', s);
     s = dispatch(s, { type: ACTIONS.CHOOSE_OPERATION, operator: '×' });
-    expect(s.current).toBe('8');
+    expect(s.current).toBe('3');
     expect(s.operator).toBe('×');
   });
 });

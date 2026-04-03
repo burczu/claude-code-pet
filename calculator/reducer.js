@@ -1,10 +1,11 @@
 import Big from 'big.js';
-import { evaluate, applyScientific } from './mathEngine';
+import { evaluateTokens, applyScientific } from './mathEngine';
 
 export const initialState = {
   current: '0',
-  previous: null,
-  operator: null,
+  tokens: [],     // [{type:'number'|'op'|'paren', value:string}] — full expression
+  previous: null, // last committed number (display hint for PERCENT)
+  operator: null, // last operator (display hint for PERCENT)
   overwrite: false,
   memory: '0',
   angleMode: 'deg',
@@ -25,51 +26,67 @@ export const ACTIONS = {
   MEMORY_SUB: 'MEMORY_SUB',
   MEMORY_RECALL: 'MEMORY_RECALL',
   MEMORY_CLEAR: 'MEMORY_CLEAR',
-  PAREN_OPEN: 'PAREN_OPEN',   // Phase 3
-  PAREN_CLOSE: 'PAREN_CLOSE', // Phase 3
+  PAREN_OPEN: 'PAREN_OPEN',
+  PAREN_CLOSE: 'PAREN_CLOSE',
 };
+
+function openParenDepth(tokens) {
+  return tokens.reduce((d, t) => d + (t.value === '(' ? 1 : t.value === ')' ? -1 : 0), 0);
+}
 
 export function calculatorReducer(state, action) {
   switch (action.type) {
     case ACTIONS.ADD_DIGIT: {
       const { digit } = action;
-
       if (state.overwrite) {
         return { ...state, current: digit === '.' ? '0.' : digit, overwrite: false };
       }
       if (digit === '.' && state.current.includes('.')) return state;
       if (digit === '0' && state.current === '0') return state;
-      if (state.current === '0' && digit !== '.') {
-        return { ...state, current: digit };
-      }
+      if (state.current === '0' && digit !== '.') return { ...state, current: digit };
       if (state.current.replace('-', '').replace('.', '').length >= 12) return state;
-
       return { ...state, current: state.current + digit };
     }
 
     case ACTIONS.CHOOSE_OPERATION: {
       const { operator } = action;
-
       if (state.current === 'Error') return state;
 
-      if (state.previous !== null && !state.overwrite) {
-        const result = evaluate(state.previous, state.current, state.operator);
-        return { current: result, previous: result, operator, overwrite: true };
+      const last = state.tokens[state.tokens.length - 1];
+
+      // User changed their mind about the operator — replace it
+      if (last?.type === 'op') {
+        return { ...state, tokens: [...state.tokens.slice(0, -1), { type: 'op', value: operator }], operator };
       }
 
-      return {
-        ...state,
-        operator,
-        previous: state.current,
-        overwrite: true,
-      };
+      // Commit current number if user typed something (not overwrite) or expression is empty
+      const commitCurrent = !state.overwrite || state.tokens.length === 0;
+      const newTokens = commitCurrent
+        ? [...state.tokens, { type: 'number', value: state.current }, { type: 'op', value: operator }]
+        : [...state.tokens, { type: 'op', value: operator }];
+
+      return { ...state, tokens: newTokens, previous: state.current, operator, overwrite: true };
     }
 
     case ACTIONS.CLEAR:
       return { ...initialState, memory: state.memory, angleMode: state.angleMode };
 
     case ACTIONS.DELETE_DIGIT: {
-      if (state.overwrite || state.current === 'Error') {
+      if (state.current === 'Error') return { ...state, current: '0', overwrite: false };
+      if (state.overwrite) {
+        // If last token is an operator, undo it
+        const last = state.tokens[state.tokens.length - 1];
+        if (last?.type === 'op') {
+          const withoutOp = state.tokens.slice(0, -1);
+          const prevNum = withoutOp[withoutOp.length - 1];
+          return {
+            ...state,
+            tokens: prevNum?.type === 'number' ? withoutOp.slice(0, -1) : withoutOp,
+            current: prevNum?.type === 'number' ? prevNum.value : state.current,
+            operator: null,
+            overwrite: false,
+          };
+        }
         return { ...state, current: '0', overwrite: false };
       }
       if (state.current.length === 1 || (state.current.length === 2 && state.current.startsWith('-'))) {
@@ -79,16 +96,14 @@ export function calculatorReducer(state, action) {
     }
 
     case ACTIONS.EVALUATE: {
-      if (state.operator === null || state.previous === null || state.current === 'Error') {
-        return state;
-      }
-      const result = evaluate(state.previous, state.current, state.operator);
-      return {
-        current: result,
-        previous: null,
-        operator: null,
-        overwrite: true,
-      };
+      if (state.current === 'Error' || state.tokens.length === 0) return state;
+      const last = state.tokens[state.tokens.length - 1];
+      // If last token is a closing paren, expression is already complete in tokens
+      const fullTokens = last?.type === 'paren' && last?.value === ')'
+        ? state.tokens
+        : [...state.tokens, { type: 'number', value: state.current }];
+      const result = evaluateTokens(fullTokens);
+      return { ...state, current: result, tokens: [], previous: null, operator: null, overwrite: true };
     }
 
     case ACTIONS.PERCENT: {
@@ -112,14 +127,35 @@ export function calculatorReducer(state, action) {
       return { ...state, current: state.current + 'e' };
     }
 
-    case ACTIONS.PAREN_OPEN:
-    case ACTIONS.PAREN_CLOSE:
-      return state; // Phase 3
+    case ACTIONS.PAREN_OPEN: {
+      // Allow ( after an operator, at start of expression, or at start (tokens empty)
+      const last = state.tokens[state.tokens.length - 1];
+      const canOpen = state.tokens.length === 0 || last?.type === 'op' || last?.value === '(';
+      if (!canOpen) return state;
+      return {
+        ...state,
+        tokens: [...state.tokens, { type: 'paren', value: '(' }],
+        current: '0',
+        overwrite: false,
+      };
+    }
+
+    case ACTIONS.PAREN_CLOSE: {
+      if (openParenDepth(state.tokens) <= 0) return state; // no open paren to close
+      if (state.current === 'Error') return state;
+      const last = state.tokens[state.tokens.length - 1];
+      // Don't close onto another '(' with nothing inside
+      if (last?.value === '(') return state;
+      const newTokens = last?.type === 'paren' && last?.value === ')'
+        ? [...state.tokens, { type: 'paren', value: ')' }]
+        : [...state.tokens, { type: 'number', value: state.current }, { type: 'paren', value: ')' }];
+      return { ...state, tokens: newTokens, overwrite: true };
+    }
 
     case ACTIONS.SCIENTIFIC_FN: {
       if (state.current === 'Error') return state;
       const result = applyScientific(state.current, action.fn, state.angleMode);
-      return { ...state, current: result, previous: null, operator: null, overwrite: true };
+      return { ...state, current: result, overwrite: true };
     }
 
     case ACTIONS.TOGGLE_ANGLE:

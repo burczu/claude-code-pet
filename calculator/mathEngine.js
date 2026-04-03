@@ -66,6 +66,69 @@ export function applyScientific(current, fn, angleMode = 'deg') {
   }
 }
 
+// Operator precedence and associativity for shunting-yard
+const PREC = { '+': 1, '-': 1, '×': 2, '÷': 2, 'xʸ': 3, 'y√x': 3 };
+const RIGHT_ASSOC = new Set(['xʸ']);
+
+function applyOp(a, b, op) {
+  switch (op) {
+    case '+':   return a.plus(b);
+    case '-':   return a.minus(b);
+    case '×':   return a.times(b);
+    case '÷':   { if (b.eq(0)) throw new Error('div0'); return a.div(b); }
+    case 'xʸ':  { const r = Math.pow(a.toNumber(), b.toNumber()); if (!isFinite(r)) throw new Error(); return new Big(r); }
+    case 'y√x': { if (a.eq(0)) throw new Error(); const r = Math.pow(b.toNumber(), 1 / a.toNumber()); if (!isFinite(r) || isNaN(r)) throw new Error(); return new Big(r); }
+    default: throw new Error('unknown op');
+  }
+}
+
+// Evaluate a token list [{type:'number'|'op'|'paren', value:string}] using shunting-yard.
+export function evaluateTokens(tokens) {
+  try {
+    const output = []; // postfix queue
+    const ops = [];    // operator stack
+
+    for (const tok of tokens) {
+      if (tok.type === 'number') {
+        output.push(tok.value);
+      } else if (tok.type === 'op') {
+        while (
+          ops.length &&
+          ops[ops.length - 1] !== '(' &&
+          (PREC[ops[ops.length - 1]] > PREC[tok.value] ||
+            (PREC[ops[ops.length - 1]] === PREC[tok.value] && !RIGHT_ASSOC.has(tok.value)))
+        ) {
+          output.push({ op: ops.pop() });
+        }
+        ops.push(tok.value);
+      } else if (tok.value === '(') {
+        ops.push('(');
+      } else if (tok.value === ')') {
+        while (ops.length && ops[ops.length - 1] !== '(') output.push({ op: ops.pop() });
+        ops.pop(); // discard '('
+      }
+    }
+    while (ops.length) output.push({ op: ops.pop() });
+
+    // Evaluate RPN — numbers are strings, operators are { op: string }
+    const stack = [];
+    for (const item of output) {
+      if (typeof item === 'string') {
+        stack.push(new Big(item));
+      } else {
+        const b = stack.pop();
+        const a = stack.pop();
+        stack.push(applyOp(a, b, item.op));
+      }
+    }
+
+    if (stack.length !== 1) return 'Error';
+    return stack[0].toFixed();
+  } catch {
+    return 'Error';
+  }
+}
+
 export function evaluate(previous, current, operator) {
   try {
     const a = new Big(previous);

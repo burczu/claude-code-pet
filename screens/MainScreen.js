@@ -108,7 +108,7 @@ export default function MainScreen() {
 
   const historyTimer = useRef(null);
   useEffect(() => {
-    if (!state.overwrite || state.operator !== null || state.previous !== null) return;
+    if (!state.overwrite || state.tokens.length > 0) return;
     if (state.current === '0' || state.current === 'Error') return;
     clearTimeout(historyTimer.current);
     historyTimer.current = setTimeout(() => pushHistory('', state.current), 500);
@@ -124,10 +124,10 @@ export default function MainScreen() {
     });
 
   const expressionText = useMemo(
-    () => state.previous && state.operator
-      ? `${formatNumber(state.previous, settings.precision)} ${state.operator}`
-      : '',
-    [state.previous, state.operator, settings.precision]
+    () => state.tokens.map((t) =>
+      t.type === 'number' ? formatNumber(t.value, settings.precision) : t.value
+    ).join(' '),
+    [state.tokens, settings.precision]
   );
 
   const buttonHandlers = useMemo(
