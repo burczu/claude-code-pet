@@ -17,7 +17,14 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SettingsProvider>
         <NavigationContainer>
-          <Tab.Navigator screenOptions={{ animation: 'shift', tabBarStyle: isLandscape ? { height: 50, paddingBottom: 4, paddingTop: 3 } : undefined }}>
+          <Tab.Navigator
+            screenOptions={{
+              animation: 'shift',
+              tabBarStyle: isLandscape
+                ? { height: 50, paddingBottom: 4, paddingTop: 3 }
+                : undefined,
+            }}
+          >
             <Tab.Screen
               name="Home"
               component={MainScreen}

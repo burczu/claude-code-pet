@@ -25,31 +25,54 @@ export function applyScientific(current, fn, angleMode = 'deg') {
 
     switch (fn) {
       // Trig
-      case 'sin':   return new Big(Math.sin(toRad(n, angleMode))).toFixed();
-      case 'cos':   return new Big(Math.cos(toRad(n, angleMode))).toFixed();
-      case 'tan':   return new Big(Math.tan(toRad(n, angleMode))).toFixed();
-      case 'asin':  return Math.abs(n) > 1 ? 'Error' : new Big(fromRad(Math.asin(n), angleMode)).toFixed();
-      case 'acos':  return Math.abs(n) > 1 ? 'Error' : new Big(fromRad(Math.acos(n), angleMode)).toFixed();
-      case 'atan':  return new Big(fromRad(Math.atan(n), angleMode)).toFixed();
+      case 'sin':
+        return new Big(Math.sin(toRad(n, angleMode))).toFixed();
+      case 'cos':
+        return new Big(Math.cos(toRad(n, angleMode))).toFixed();
+      case 'tan':
+        return new Big(Math.tan(toRad(n, angleMode))).toFixed();
+      case 'asin':
+        return Math.abs(n) > 1 ? 'Error' : new Big(fromRad(Math.asin(n), angleMode)).toFixed();
+      case 'acos':
+        return Math.abs(n) > 1 ? 'Error' : new Big(fromRad(Math.acos(n), angleMode)).toFixed();
+      case 'atan':
+        return new Big(fromRad(Math.atan(n), angleMode)).toFixed();
 
       // Hyperbolic
-      case 'sinh':  return new Big(Math.sinh(n)).toFixed();
-      case 'cosh':  return new Big(Math.cosh(n)).toFixed();
-      case 'tanh':  return new Big(Math.tanh(n)).toFixed();
-      case 'asinh': return new Big(Math.asinh(n)).toFixed();
-      case 'acosh': return n < 1 ? 'Error' : new Big(Math.acosh(n)).toFixed();
-      case 'atanh': return Math.abs(n) >= 1 ? 'Error' : new Big(Math.atanh(n)).toFixed();
+      case 'sinh':
+        return new Big(Math.sinh(n)).toFixed();
+      case 'cosh':
+        return new Big(Math.cosh(n)).toFixed();
+      case 'tanh':
+        return new Big(Math.tanh(n)).toFixed();
+      case 'asinh':
+        return new Big(Math.asinh(n)).toFixed();
+      case 'acosh':
+        return n < 1 ? 'Error' : new Big(Math.acosh(n)).toFixed();
+      case 'atanh':
+        return Math.abs(n) >= 1 ? 'Error' : new Big(Math.atanh(n)).toFixed();
 
       // Powers & roots
-      case 'x²':  return big.times(big).toFixed();
-      case 'x³':  return big.times(big).times(big).toFixed();
-      case '√':   return big.lt(0) ? 'Error' : new Big(Math.sqrt(n)).toFixed();
-      case '³√':  return new Big(Math.cbrt(n)).toFixed();
-      case 'eˣ':  return new Big(Math.exp(n)).toFixed();
-      case '10ˣ': { const r = Math.pow(10, n); return isFinite(r) ? new Big(r).toFixed() : 'Error'; }
-      case 'ln':  return n <= 0 ? 'Error' : new Big(Math.log(n)).toFixed();
-      case 'log': return n <= 0 ? 'Error' : new Big(Math.log10(n)).toFixed();
-      case '1/x': return big.eq(0) ? 'Error' : new Big(1).div(big).toFixed();
+      case 'x²':
+        return big.times(big).toFixed();
+      case 'x³':
+        return big.times(big).times(big).toFixed();
+      case '√':
+        return big.lt(0) ? 'Error' : new Big(Math.sqrt(n)).toFixed();
+      case '³√':
+        return new Big(Math.cbrt(n)).toFixed();
+      case 'eˣ':
+        return new Big(Math.exp(n)).toFixed();
+      case '10ˣ': {
+        const r = Math.pow(10, n);
+        return isFinite(r) ? new Big(r).toFixed() : 'Error';
+      }
+      case 'ln':
+        return n <= 0 ? 'Error' : new Big(Math.log(n)).toFixed();
+      case 'log':
+        return n <= 0 ? 'Error' : new Big(Math.log10(n)).toFixed();
+      case '1/x':
+        return big.eq(0) ? 'Error' : new Big(1).div(big).toFixed();
 
       // Misc
       case 'x!': {
@@ -57,9 +80,11 @@ export function applyScientific(current, fn, angleMode = 'deg') {
         if (n < 0 || Math.abs(n - int) > 1e-9) return 'Error';
         return new Big(factorial(int)).toFixed();
       }
-      case 'Rand': return String(Math.random());
+      case 'Rand':
+        return String(Math.random());
 
-      default: return 'Error';
+      default:
+        return 'Error';
     }
   } catch {
     return 'Error';
@@ -67,18 +92,34 @@ export function applyScientific(current, fn, angleMode = 'deg') {
 }
 
 // Operator precedence and associativity for shunting-yard
-const PREC = { '+': 1, '-': 1, '×': 2, '÷': 2, 'xʸ': 3, 'y√x': 3 };
+const PREC = { '+': 1, '-': 1, '×': 2, '÷': 2, xʸ: 3, 'y√x': 3 };
 const RIGHT_ASSOC = new Set(['xʸ']);
 
 function applyOp(a, b, op) {
   switch (op) {
-    case '+':   return a.plus(b);
-    case '-':   return a.minus(b);
-    case '×':   return a.times(b);
-    case '÷':   { if (b.eq(0)) throw new Error('div0'); return a.div(b); }
-    case 'xʸ':  { const r = Math.pow(a.toNumber(), b.toNumber()); if (!isFinite(r)) throw new Error(); return new Big(r); }
-    case 'y√x': { if (a.eq(0)) throw new Error(); const r = Math.pow(b.toNumber(), 1 / a.toNumber()); if (!isFinite(r) || isNaN(r)) throw new Error(); return new Big(r); }
-    default: throw new Error('unknown op');
+    case '+':
+      return a.plus(b);
+    case '-':
+      return a.minus(b);
+    case '×':
+      return a.times(b);
+    case '÷': {
+      if (b.eq(0)) throw new Error('div0');
+      return a.div(b);
+    }
+    case 'xʸ': {
+      const r = Math.pow(a.toNumber(), b.toNumber());
+      if (!isFinite(r)) throw new Error();
+      return new Big(r);
+    }
+    case 'y√x': {
+      if (a.eq(0)) throw new Error();
+      const r = Math.pow(b.toNumber(), 1 / a.toNumber());
+      if (!isFinite(r) || isNaN(r)) throw new Error();
+      return new Big(r);
+    }
+    default:
+      throw new Error('unknown op');
   }
 }
 
@@ -86,7 +127,7 @@ function applyOp(a, b, op) {
 export function evaluateTokens(tokens) {
   try {
     const output = []; // postfix queue
-    const ops = [];    // operator stack
+    const ops = []; // operator stack
 
     for (const tok of tokens) {
       if (tok.type === 'number') {
@@ -135,10 +176,14 @@ export function evaluate(previous, current, operator) {
     const b = new Big(current);
 
     switch (operator) {
-      case '+':   return a.plus(b).toFixed();
-      case '-':   return a.minus(b).toFixed();
-      case '×':   return a.times(b).toFixed();
-      case '÷':   return b.eq(0) ? 'Error' : a.div(b).toFixed();
+      case '+':
+        return a.plus(b).toFixed();
+      case '-':
+        return a.minus(b).toFixed();
+      case '×':
+        return a.times(b).toFixed();
+      case '÷':
+        return b.eq(0) ? 'Error' : a.div(b).toFixed();
       case 'xʸ': {
         const r = Math.pow(a.toNumber(), b.toNumber());
         return isFinite(r) ? new Big(r).toFixed() : 'Error';
@@ -148,7 +193,8 @@ export function evaluate(previous, current, operator) {
         const r = Math.pow(b.toNumber(), 1 / a.toNumber());
         return isFinite(r) && !isNaN(r) ? new Big(r).toFixed() : 'Error';
       }
-      default: return current;
+      default:
+        return current;
     }
   } catch {
     return 'Error';

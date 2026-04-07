@@ -5,10 +5,9 @@ function dispatch(state, action) {
 }
 
 function typeDigits(digits, state = initialState) {
-  return digits.split('').reduce(
-    (s, digit) => dispatch(s, { type: ACTIONS.ADD_DIGIT, digit }),
-    state
-  );
+  return digits
+    .split('')
+    .reduce((s, digit) => dispatch(s, { type: ACTIONS.ADD_DIGIT, digit }), state);
 }
 
 describe('CLEAR', () => {

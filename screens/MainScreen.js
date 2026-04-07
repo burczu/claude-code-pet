@@ -15,10 +15,10 @@ const GAP = 12;
 const COLS = 4;
 
 const BUTTONS = [
-  { label: 'AC',  type: 'function', action: { type: ACTIONS.CLEAR } },
+  { label: 'AC', type: 'function', action: { type: ACTIONS.CLEAR } },
   { label: '+/-', type: 'function', action: { type: ACTIONS.ADD_DIGIT, digit: '-' } },
-  { label: '%',   type: 'function', action: { type: ACTIONS.PERCENT } },
-  { label: '÷',   type: 'operator', action: { type: ACTIONS.CHOOSE_OPERATION, operator: '÷' } },
+  { label: '%', type: 'function', action: { type: ACTIONS.PERCENT } },
+  { label: '÷', type: 'operator', action: { type: ACTIONS.CHOOSE_OPERATION, operator: '÷' } },
 
   { label: '7', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '7' } },
   { label: '8', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '8' } },
@@ -49,32 +49,36 @@ export default function MainScreen() {
   const [container, setContainer] = useState({ width: 0, height: 0 });
   const onLayout = useCallback((e) => {
     const { width: w, height: h } = e.nativeEvent.layout;
-    setContainer((prev) => (prev.width === w && prev.height === h ? prev : { width: w, height: h }));
+    setContainer((prev) =>
+      prev.width === w && prev.height === h ? prev : { width: w, height: h },
+    );
   }, []);
 
   useEffect(() => {
     const value = route.params?.initialValue;
     if (value) {
       dispatch({ type: ACTIONS.CLEAR });
-      String(value).split('').forEach((digit) => {
-        dispatch({ type: ACTIONS.ADD_DIGIT, digit });
-      });
+      String(value)
+        .split('')
+        .forEach((digit) => {
+          dispatch({ type: ACTIONS.ADD_DIGIT, digit });
+        });
     }
   }, [route.params?.initialValue]);
   const theme = useMemo(
     () => ({ ...THEMES[resolvedScheme], operatorBtn: settings.accentColor }),
-    [resolvedScheme, settings.accentColor]
+    [resolvedScheme, settings.accentColor],
   );
   const isLandscape = width > height;
 
-  const SCI_COLS = 4;          // landscape
+  const SCI_COLS = 4; // landscape
   const SCI_COLS_PORTRAIT = 6; // portrait
   const ROWS = 5;
   const showScientific = settings.scientificMode;
   // Use measured container size (accounts for tab bar, safe areas, nav chrome).
   // Fall back to window-based estimate before first layout fires.
-  const cw = container.width  || (width  - insets.left - insets.right);
-  const ch = container.height || (height - insets.top  - insets.bottom - 83); // 83 ≈ tab bar
+  const cw = container.width || width - insets.left - insets.right;
+  const ch = container.height || height - insets.top - insets.bottom - 83; // 83 ≈ tab bar
 
   const sciPanelRatio = isLandscape && showScientific ? 0.45 : 0;
   const calcWidth = isLandscape && showScientific ? cw * (1 - sciPanelRatio) : cw;
@@ -85,25 +89,30 @@ export default function MainScreen() {
   // Portrait scientific: share available height equally across all 10 rows (5 sci + 5 basic)
   // Total overhead: display(120) + grid gaps(72) + sci gaps(36) = 228
   const portraitSciDisplayHeight = 60;
-  const portraitSciSharedHeight = !isLandscape && showScientific && ch > 0
-    ? Math.max((ch - portraitSciDisplayHeight - (ROWS - 1) * GAP - 2 * GAP - (ROWS - 1) * 6 - 12) / (ROWS + ROWS), 18)
-    : null;
+  const portraitSciSharedHeight =
+    !isLandscape && showScientific && ch > 0
+      ? Math.max(
+          (ch - portraitSciDisplayHeight - (ROWS - 1) * GAP - 2 * GAP - (ROWS - 1) * 6 - 12) /
+            (ROWS + ROWS),
+          18,
+        )
+      : null;
 
   // Height-based: how tall each button can be to fit all rows
   const buttonHeight = isLandscape
-    ? (ch - 72 - 12 - GAP * (ROWS + 1)) / ROWS  // 12 = paddingTop on row, 72 = display reserve
+    ? (ch - 72 - 12 - GAP * (ROWS + 1)) / ROWS // 12 = paddingTop on row, 72 = display reserve
     : (portraitSciSharedHeight ?? buttonSize);
 
   // Landscape: scientific panel on the left at 45% width
-  const sciButtonSize = isLandscape && showScientific
-    ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS
-    : 0;
+  const sciButtonSize =
+    isLandscape && showScientific ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS : 0;
 
   // Portrait: 6-col panel, paddingHorizontal=12 each side, row gap = buttonSize*0.12
   // Solve: 6*bs + 5*(bs*0.12) + 24 = cw → bs = (cw-24)/6.6
-  const sciPortraitButtonSize = !isLandscape && showScientific
-    ? (cw - 24) / (SCI_COLS_PORTRAIT + (SCI_COLS_PORTRAIT - 1) * 0.12)
-    : 0;
+  const sciPortraitButtonSize =
+    !isLandscape && showScientific
+      ? (cw - 24) / (SCI_COLS_PORTRAIT + (SCI_COLS_PORTRAIT - 1) * 0.12)
+      : 0;
   const sciPortraitButtonHeight = portraitSciSharedHeight ?? 0;
 
   const historyTimer = useRef(null);
@@ -124,19 +133,23 @@ export default function MainScreen() {
     });
 
   const expressionText = useMemo(
-    () => state.tokens.map((t) =>
-      t.type === 'number' ? formatNumber(t.value, settings.precision) : t.value
-    ).join(' '),
-    [state.tokens, settings.precision]
+    () =>
+      state.tokens
+        .map((t) => (t.type === 'number' ? formatNumber(t.value, settings.precision) : t.value))
+        .join(' '),
+    [state.tokens, settings.precision],
   );
 
   const buttonHandlers = useMemo(
     () => BUTTONS.map((btn) => () => dispatch(btn.action)),
-    [dispatch]
+    [dispatch],
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'bottom', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: theme.background }]}
+      edges={['top', 'bottom', 'left', 'right']}
+    >
       <View style={[styles.row, isLandscape && styles.rowLandscape]} onLayout={onLayout}>
         {isLandscape && showScientific && (
           <ScientificPanel
@@ -152,20 +165,53 @@ export default function MainScreen() {
 
         <View style={{ flex: 1, alignSelf: 'stretch' }}>
           <GestureDetector gesture={swipe}>
-            <View style={[styles.display, isLandscape && styles.displayLandscape, !isLandscape && showScientific && { flex: 0, height: portraitSciDisplayHeight }]}>
+            <View
+              style={[
+                styles.display,
+                isLandscape && styles.displayLandscape,
+                !isLandscape && showScientific && { flex: 0, height: portraitSciDisplayHeight },
+              ]}
+            >
               <View style={[styles.indicators, isLandscape && styles.indicatorsLandscape]}>
                 {state.memory !== '0' && (
-                  <Text style={[styles.indicator, { color: theme.expressionText }, isLandscape && styles.indicatorLandscape]}>M</Text>
+                  <Text
+                    style={[
+                      styles.indicator,
+                      { color: theme.expressionText },
+                      isLandscape && styles.indicatorLandscape,
+                    ]}
+                  >
+                    M
+                  </Text>
                 )}
                 {showScientific && state.angleMode === 'rad' && (
-                  <Text style={[styles.indicator, { color: theme.expressionText }, isLandscape && styles.indicatorLandscape]}>RAD</Text>
+                  <Text
+                    style={[
+                      styles.indicator,
+                      { color: theme.expressionText },
+                      isLandscape && styles.indicatorLandscape,
+                    ]}
+                  >
+                    RAD
+                  </Text>
                 )}
               </View>
-              <Text style={[styles.expression, { color: theme.expressionText }, isLandscape && styles.expressionLandscape]} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.expression,
+                  { color: theme.expressionText },
+                  isLandscape && styles.expressionLandscape,
+                ]}
+                numberOfLines={1}
+              >
                 {expressionText}
               </Text>
               <Text
-                style={[styles.current, { color: theme.currentText }, isLandscape && styles.currentLandscape]}
+                style={[
+                  styles.current,
+                  { color: theme.currentText },
+                  isLandscape && styles.currentLandscape,
+                ]}
                 adjustsFontSizeToFit
                 numberOfLines={1}
                 minimumFontScale={0.4}
@@ -187,7 +233,13 @@ export default function MainScreen() {
             />
           )}
 
-          <View style={[styles.grid, { padding: GAP, gap: GAP }, !isLandscape && showScientific && { paddingBottom: GAP / 2 }]}>
+          <View
+            style={[
+              styles.grid,
+              { padding: GAP, gap: GAP },
+              !isLandscape && showScientific && { paddingBottom: GAP / 2 },
+            ]}
+          >
             {BUTTONS.map((btn, index) => (
               <CalcButton
                 key={btn.label}

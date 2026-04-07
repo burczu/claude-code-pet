@@ -3,7 +3,7 @@ import { evaluateTokens, applyScientific } from './mathEngine';
 
 export const initialState = {
   current: '0',
-  tokens: [],     // [{type:'number'|'op'|'paren', value:string}] — full expression
+  tokens: [], // [{type:'number'|'op'|'paren', value:string}] — full expression
   previous: null, // last committed number (display hint for PERCENT)
   operator: null, // last operator (display hint for PERCENT)
   overwrite: false,
@@ -56,13 +56,21 @@ export function calculatorReducer(state, action) {
 
       // User changed their mind about the operator — replace it
       if (last?.type === 'op') {
-        return { ...state, tokens: [...state.tokens.slice(0, -1), { type: 'op', value: operator }], operator };
+        return {
+          ...state,
+          tokens: [...state.tokens.slice(0, -1), { type: 'op', value: operator }],
+          operator,
+        };
       }
 
       // Commit current number if user typed something (not overwrite) or expression is empty
       const commitCurrent = !state.overwrite || state.tokens.length === 0;
       const newTokens = commitCurrent
-        ? [...state.tokens, { type: 'number', value: state.current }, { type: 'op', value: operator }]
+        ? [
+            ...state.tokens,
+            { type: 'number', value: state.current },
+            { type: 'op', value: operator },
+          ]
         : [...state.tokens, { type: 'op', value: operator }];
 
       return { ...state, tokens: newTokens, previous: state.current, operator, overwrite: true };
@@ -89,7 +97,10 @@ export function calculatorReducer(state, action) {
         }
         return { ...state, current: '0', overwrite: false };
       }
-      if (state.current.length === 1 || (state.current.length === 2 && state.current.startsWith('-'))) {
+      if (
+        state.current.length === 1 ||
+        (state.current.length === 2 && state.current.startsWith('-'))
+      ) {
         return { ...state, current: '0' };
       }
       return { ...state, current: state.current.slice(0, -1) };
@@ -99,11 +110,19 @@ export function calculatorReducer(state, action) {
       if (state.current === 'Error' || state.tokens.length === 0) return state;
       const last = state.tokens[state.tokens.length - 1];
       // If last token is a closing paren, expression is already complete in tokens
-      const fullTokens = last?.type === 'paren' && last?.value === ')'
-        ? state.tokens
-        : [...state.tokens, { type: 'number', value: state.current }];
+      const fullTokens =
+        last?.type === 'paren' && last?.value === ')'
+          ? state.tokens
+          : [...state.tokens, { type: 'number', value: state.current }];
       const result = evaluateTokens(fullTokens);
-      return { ...state, current: result, tokens: [], previous: null, operator: null, overwrite: true };
+      return {
+        ...state,
+        current: result,
+        tokens: [],
+        previous: null,
+        operator: null,
+        overwrite: true,
+      };
     }
 
     case ACTIONS.PERCENT: {
@@ -146,9 +165,14 @@ export function calculatorReducer(state, action) {
       const last = state.tokens[state.tokens.length - 1];
       // Don't close onto another '(' with nothing inside
       if (last?.value === '(') return state;
-      const newTokens = last?.type === 'paren' && last?.value === ')'
-        ? [...state.tokens, { type: 'paren', value: ')' }]
-        : [...state.tokens, { type: 'number', value: state.current }, { type: 'paren', value: ')' }];
+      const newTokens =
+        last?.type === 'paren' && last?.value === ')'
+          ? [...state.tokens, { type: 'paren', value: ')' }]
+          : [
+              ...state.tokens,
+              { type: 'number', value: state.current },
+              { type: 'paren', value: ')' },
+            ];
       return { ...state, tokens: newTokens, overwrite: true };
     }
 
@@ -172,14 +196,18 @@ export function calculatorReducer(state, action) {
       if (state.current === 'Error') return state;
       try {
         return { ...state, memory: new Big(state.memory).plus(new Big(state.current)).toFixed() };
-      } catch { return state; }
+      } catch {
+        return state;
+      }
     }
 
     case ACTIONS.MEMORY_SUB: {
       if (state.current === 'Error') return state;
       try {
         return { ...state, memory: new Big(state.memory).minus(new Big(state.current)).toFixed() };
-      } catch { return state; }
+      } catch {
+        return state;
+      }
     }
 
     case ACTIONS.MEMORY_RECALL:

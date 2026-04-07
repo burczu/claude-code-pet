@@ -19,9 +19,7 @@ const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULTS);
-  const [systemScheme, setSystemScheme] = useState(
-    Appearance.getColorScheme() ?? 'light'
-  );
+  const [systemScheme, setSystemScheme] = useState(Appearance.getColorScheme() ?? 'light');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -54,13 +52,11 @@ export function SettingsProvider({ children }) {
 
   const ctxValue = useMemo(
     () => ({ settings, updateSetting, resolvedScheme, ready }),
-    [settings, updateSetting, resolvedScheme, ready]
+    [settings, updateSetting, resolvedScheme, ready],
   );
 
   return (
-    <SettingsContext.Provider value={ctxValue}>
-      {ready ? children : null}
-    </SettingsContext.Provider>
+    <SettingsContext.Provider value={ctxValue}>{ready ? children : null}</SettingsContext.Provider>
   );
 }
 

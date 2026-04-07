@@ -2,22 +2,31 @@ import { memo } from 'react';
 import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
-function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize, buttonHeight, theme, hapticsEnabled = true }) {
+function CalcButton({
+  label,
+  type = 'number',
+  onPress,
+  wide = false,
+  buttonSize,
+  buttonHeight,
+  theme,
+  hapticsEnabled = true,
+}) {
   function handlePress() {
     if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   }
   const bg = {
-    number:     theme?.numberBtn     ?? '#333',
-    operator:   theme?.operatorBtn   ?? '#ff9f0a',
-    function:   theme?.functionBtn   ?? '#a5a5a5',
+    number: theme?.numberBtn ?? '#333',
+    operator: theme?.operatorBtn ?? '#ff9f0a',
+    function: theme?.functionBtn ?? '#a5a5a5',
     scientific: theme?.scientificBtn ?? '#1c1c1e',
   }[type];
 
   const textColor = {
-    number:     theme?.numberText     ?? '#fff',
-    operator:   theme?.operatorText   ?? '#fff',
-    function:   theme?.functionText   ?? '#000',
+    number: theme?.numberText ?? '#fff',
+    operator: theme?.operatorText ?? '#fff',
+    function: theme?.functionText ?? '#000',
     scientific: theme?.scientificText ?? '#fff',
   }[type];
 
@@ -39,9 +48,7 @@ function CalcButton({ label, type = 'number', onPress, wide = false, buttonSize,
         },
       ]}
     >
-      <Text style={[styles.label, { color: textColor, fontSize: h * 0.38 }]}>
-        {label}
-      </Text>
+      <Text style={[styles.label, { color: textColor, fontSize: h * 0.38 }]}>{label}</Text>
     </Pressable>
   );
 }
