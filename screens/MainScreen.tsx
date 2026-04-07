@@ -1,33 +1,19 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import CalcButton from '../components/CalcButton';
 import ScientificPanel from '../components/ScientificPanel';
 import { ACTIONS, CalculatorAction, calculatorReducer, initialState } from '../calculator/reducer';
 import { formatNumber } from '../calculator/formatNumber';
 import { useSettings } from '../store/SettingsContext';
-import { pushHistory } from '../services/historyService';
+import { GAP, PORTRAIT_SCI_DISPLAY_HEIGHT, useCalcLayout } from '../calculator/useCalcLayout';
+import { useHistoryPush } from '../calculator/useHistoryPush';
+import { useSwipeToDelete } from '../calculator/useSwipeToDelete';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 
-const GAP = 12;
-const COLS = 4;
-const ROWS = 5;
-const SCI_COLS_LANDSCAPE = 4;
-const SCI_COLS_PORTRAIT = 6;
-const SCI_PANEL_WIDTH_RATIO = 0.45;
 const TAB_BAR_HEIGHT_ESTIMATE = 83;
-const LANDSCAPE_DISPLAY_RESERVE = 72;
-const LANDSCAPE_ROW_PADDING_TOP = 12;
-// Portrait sci layout: row gap inside sci panel uses a proportional ratio
-const SCI_ROW_GAP_RATIO = 0.12;
-const PORTRAIT_SCI_DISPLAY_HEIGHT = 60;
-const PORTRAIT_SCI_SHARED_HEIGHT_MIN = 18;
-const SCIENTIFIC_ROW_GAP_EXTRA = 6;
-const PORTRAIT_SCI_PADDING = 12;
-const SWIPE_THRESHOLD_X = 40;
-const SWIPE_THRESHOLD_Y = 40;
 
 const BUTTONS = [
   { label: 'AC', type: 'function' as const, action: { type: ACTIONS.CLEAR } },
@@ -122,69 +108,12 @@ export default function MainScreen() {
   const cw = container.width || width - insets.left - insets.right;
   const ch = container.height || height - insets.top - insets.bottom - TAB_BAR_HEIGHT_ESTIMATE;
 
-  const sciPanelRatio = isLandscape && showScientific ? SCI_PANEL_WIDTH_RATIO : 0;
-  const calcWidth = isLandscape && showScientific ? cw * (1 - sciPanelRatio) : cw;
+  const { buttonSize, buttonHeight, sciButtonSize, sciPortraitButtonSize, sciPortraitButtonHeight } =
+    useCalcLayout({ cw, ch, isLandscape, showScientific });
 
-  // Width-based: how wide each button can be given the column count
-  const buttonSize = (calcWidth - GAP * (COLS + 1)) / COLS;
+  useHistoryPush(state.current, state.overwrite, state.tokens);
 
-  // Portrait scientific: share available height equally across all 10 rows (5 sci + 5 basic)
-  const portraitSciSharedHeight =
-    !isLandscape && showScientific && ch > 0
-      ? Math.max(
-          (ch -
-            PORTRAIT_SCI_DISPLAY_HEIGHT -
-            (ROWS - 1) * GAP -
-            2 * GAP -
-            (ROWS - 1) * SCIENTIFIC_ROW_GAP_EXTRA -
-            PORTRAIT_SCI_PADDING) /
-            (ROWS + ROWS),
-          PORTRAIT_SCI_SHARED_HEIGHT_MIN,
-        )
-      : null;
-
-  // Height-based: how tall each button can be to fit all rows
-  const buttonHeight = isLandscape
-    ? (ch - LANDSCAPE_DISPLAY_RESERVE - LANDSCAPE_ROW_PADDING_TOP - GAP * (ROWS + 1)) / ROWS
-    : (portraitSciSharedHeight ?? buttonSize);
-
-  // Landscape: scientific panel on the left at 45% width
-  const sciButtonSize =
-    isLandscape && showScientific
-      ? (cw * sciPanelRatio - GAP * (SCI_COLS_LANDSCAPE + 1)) / SCI_COLS_LANDSCAPE
-      : 0;
-
-  // Portrait: 6-col panel, paddingHorizontal=12 each side, row gap = buttonSize*SCI_ROW_GAP_RATIO
-  // Solve: 6*bs + 5*(bs*SCI_ROW_GAP_RATIO) + 24 = cw → bs = (cw-24)/(6+5*SCI_ROW_GAP_RATIO)
-  const SCI_PORTRAIT_PANEL_PADDING = 24;
-  const sciPortraitButtonSize =
-    !isLandscape && showScientific
-      ? (cw - SCI_PORTRAIT_PANEL_PADDING) /
-        (SCI_COLS_PORTRAIT + (SCI_COLS_PORTRAIT - 1) * SCI_ROW_GAP_RATIO)
-      : 0;
-  const sciPortraitButtonHeight = portraitSciSharedHeight ?? 0;
-
-  const historyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!state.overwrite || state.tokens.length > 0) return;
-    if (state.current === '0' || state.current === 'Error') return;
-    if (historyTimer.current) clearTimeout(historyTimer.current);
-    historyTimer.current = setTimeout(() => pushHistory('', state.current), 500);
-    return () => {
-      if (historyTimer.current) clearTimeout(historyTimer.current);
-    };
-  }, [state.current, state.overwrite]);
-
-  const swipe = Gesture.Pan()
-    .runOnJS(true)
-    .onEnd((evt) => {
-      if (
-        Math.abs(evt.translationX) > SWIPE_THRESHOLD_X &&
-        Math.abs(evt.translationY) < SWIPE_THRESHOLD_Y
-      ) {
-        dispatch({ type: ACTIONS.DELETE_DIGIT });
-      }
-    });
+  const swipe = useSwipeToDelete(() => dispatch({ type: ACTIONS.DELETE_DIGIT }));
 
   const expressionText = useMemo(
     () =>
