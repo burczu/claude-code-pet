@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GestureDetector } from 'react-native-gesture-handler';
 import CalcButton from '../components/CalcButton';
+import CalcDisplay from '../components/CalcDisplay';
 import ScientificPanel from '../components/ScientificPanel';
 import { ACTIONS, CalculatorAction, calculatorReducer, initialState } from '../calculator/reducer';
 import { formatNumber } from '../calculator/formatNumber';
 import { useSettings } from '../store/SettingsContext';
-import { GAP, PORTRAIT_SCI_DISPLAY_HEIGHT, useCalcLayout } from '../calculator/useCalcLayout';
+import { GAP, useCalcLayout } from '../calculator/useCalcLayout';
 import { useHistoryPush } from '../calculator/useHistoryPush';
 import { useSwipeToDelete } from '../calculator/useSwipeToDelete';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
@@ -146,50 +146,16 @@ export default function MainScreen() {
         )}
 
         <View style={{ flex: 1, alignSelf: 'stretch' }}>
-          <GestureDetector gesture={swipe}>
-            <View
-              style={[
-                styles.display,
-                isLandscape && styles.displayLandscape,
-                !isLandscape && showScientific && { flex: 0, height: PORTRAIT_SCI_DISPLAY_HEIGHT },
-              ]}
-            >
-              <View style={[styles.indicators, isLandscape && styles.indicatorsLandscape]}>
-                {state.memory !== '0' && (
-                  <ThemedText
-                    variant={isLandscape ? 'indicatorLandscape' : 'indicator'}
-                    style={{ color: colors.expressionText }}
-                  >
-                    M
-                  </ThemedText>
-                )}
-                {showScientific && state.angleMode === 'rad' && (
-                  <ThemedText
-                    variant={isLandscape ? 'indicatorLandscape' : 'indicator'}
-                    style={{ color: colors.expressionText }}
-                  >
-                    RAD
-                  </ThemedText>
-                )}
-              </View>
-              <ThemedText
-                variant={isLandscape ? 'expressionLandscape' : 'expression'}
-                style={{ color: colors.expressionText }}
-                numberOfLines={1}
-              >
-                {expressionText}
-              </ThemedText>
-              <ThemedText
-                variant={isLandscape ? 'currentLandscape' : 'current'}
-                style={[styles.currentBase, { color: colors.currentText }]}
-                adjustsFontSizeToFit
-                numberOfLines={1}
-                minimumFontScale={0.4}
-              >
-                {formatNumber(state.current, settings.precision)}
-              </ThemedText>
-            </View>
-          </GestureDetector>
+          <CalcDisplay
+            expressionText={expressionText}
+            current={state.current}
+            precision={settings.precision}
+            memory={state.memory}
+            angleMode={state.angleMode}
+            showScientific={showScientific}
+            isLandscape={isLandscape}
+            swipe={swipe}
+          />
 
           {!isLandscape && showScientific && (
             <ScientificPanel
@@ -232,19 +198,5 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   row: { flex: 1, flexDirection: 'row', alignItems: 'flex-end' },
   rowLandscape: { paddingTop: 12 },
-  display: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-  },
-  displayLandscape: {
-    paddingBottom: 2,
-    overflow: 'hidden',
-  },
-  indicators: { flexDirection: 'row', gap: 8, alignSelf: 'flex-end', marginBottom: 2 },
-  indicatorsLandscape: { marginBottom: 0 },
-  currentBase: { width: '100%', textAlign: 'right' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
 });
