@@ -1,6 +1,21 @@
 import { memo } from 'react';
 import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Theme } from '../theme/colors';
+
+const PRESSED_OPACITY_IOS = 0.7;
+const FONT_SIZE_MULTIPLIER = 0.38;
+
+interface CalcButtonProps {
+  label: string;
+  type?: 'number' | 'operator' | 'function' | 'scientific';
+  onPress: () => void;
+  wide?: boolean | undefined;
+  buttonSize: number;
+  buttonHeight?: number | undefined;
+  theme: Theme;
+  hapticsEnabled?: boolean;
+}
 
 function CalcButton({
   label,
@@ -11,24 +26,25 @@ function CalcButton({
   buttonHeight,
   theme,
   hapticsEnabled = true,
-}) {
+}: CalcButtonProps) {
   function handlePress() {
     if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   }
-  const bg = {
-    number: theme?.numberBtn ?? '#333',
-    operator: theme?.operatorBtn ?? '#ff9f0a',
-    function: theme?.functionBtn ?? '#a5a5a5',
-    scientific: theme?.scientificBtn ?? '#1c1c1e',
-  }[type];
 
-  const textColor = {
-    number: theme?.numberText ?? '#fff',
-    operator: theme?.operatorText ?? '#fff',
-    function: theme?.functionText ?? '#000',
-    scientific: theme?.scientificText ?? '#fff',
-  }[type];
+  const bg: Record<string, string> = {
+    number: theme.numberBtn,
+    operator: theme.operatorBtn,
+    function: theme.functionBtn,
+    scientific: theme.scientificBtn,
+  };
+
+  const textColor: Record<string, string> = {
+    number: theme.numberText,
+    operator: theme.operatorText,
+    function: theme.functionText,
+    scientific: theme.scientificText,
+  };
 
   const h = buttonHeight ?? buttonSize;
   const width = wide ? buttonSize * 2 + 12 : buttonSize;
@@ -43,12 +59,14 @@ function CalcButton({
           width,
           height: h,
           borderRadius: Math.min(width, h) / 2,
-          backgroundColor: bg,
-          opacity: Platform.OS === 'ios' && pressed ? 0.7 : 1,
+          backgroundColor: bg[type],
+          opacity: Platform.OS === 'ios' && pressed ? PRESSED_OPACITY_IOS : 1,
         },
       ]}
     >
-      <Text style={[styles.label, { color: textColor, fontSize: h * 0.38 }]}>{label}</Text>
+      <Text style={[styles.label, { color: textColor[type], fontSize: h * FONT_SIZE_MULTIPLIER }]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

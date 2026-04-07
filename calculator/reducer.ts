@@ -1,11 +1,23 @@
 import Big from 'big.js';
-import { evaluateTokens, applyScientific } from './mathEngine';
+import { evaluateTokens, applyScientific, Token, AngleMode, ScientificFn, Operator } from './mathEngine';
 
-export const initialState = {
+const MAX_DISPLAY_DIGITS = 12;
+
+export interface CalculatorState {
+  current: string;
+  tokens: Token[]; // [{type:'number'|'op'|'paren', value:string}] — full expression
+  previous: string | null; // last committed number (display hint for PERCENT)
+  operator: Operator | null; // last operator (display hint for PERCENT)
+  overwrite: boolean;
+  memory: string;
+  angleMode: AngleMode;
+}
+
+export const initialState: CalculatorState = {
   current: '0',
-  tokens: [], // [{type:'number'|'op'|'paren', value:string}] — full expression
-  previous: null, // last committed number (display hint for PERCENT)
-  operator: null, // last operator (display hint for PERCENT)
+  tokens: [],
+  previous: null,
+  operator: null,
   overwrite: false,
   memory: '0',
   angleMode: 'deg',
@@ -28,13 +40,36 @@ export const ACTIONS = {
   MEMORY_CLEAR: 'MEMORY_CLEAR',
   PAREN_OPEN: 'PAREN_OPEN',
   PAREN_CLOSE: 'PAREN_CLOSE',
-};
+} as const;
 
-function openParenDepth(tokens) {
+export type ActionType = (typeof ACTIONS)[keyof typeof ACTIONS];
+
+export type CalculatorAction =
+  | { type: 'ADD_DIGIT'; digit: string }
+  | { type: 'ADD_EE' }
+  | { type: 'CHOOSE_OPERATION'; operator: Operator }
+  | { type: 'CLEAR' }
+  | { type: 'DELETE_DIGIT' }
+  | { type: 'EVALUATE' }
+  | { type: 'PERCENT' }
+  | { type: 'SCIENTIFIC_FN'; fn: ScientificFn }
+  | { type: 'TOGGLE_ANGLE' }
+  | { type: 'INSERT_CONSTANT'; constant: string }
+  | { type: 'MEMORY_ADD' }
+  | { type: 'MEMORY_SUB' }
+  | { type: 'MEMORY_RECALL' }
+  | { type: 'MEMORY_CLEAR' }
+  | { type: 'PAREN_OPEN' }
+  | { type: 'PAREN_CLOSE' };
+
+function openParenDepth(tokens: Token[]): number {
   return tokens.reduce((d, t) => d + (t.value === '(' ? 1 : t.value === ')' ? -1 : 0), 0);
 }
 
-export function calculatorReducer(state, action) {
+export function calculatorReducer(
+  state: CalculatorState,
+  action: CalculatorAction,
+): CalculatorState {
   switch (action.type) {
     case ACTIONS.ADD_DIGIT: {
       const { digit } = action;
@@ -44,7 +79,9 @@ export function calculatorReducer(state, action) {
       if (digit === '.' && state.current.includes('.')) return state;
       if (digit === '0' && state.current === '0') return state;
       if (state.current === '0' && digit !== '.') return { ...state, current: digit };
-      if (state.current.replace('-', '').replace('.', '').length >= 12) return state;
+      if (state.current.replace('-', '').replace('.', '').length >= MAX_DISPLAY_DIGITS) {
+        return state;
+      }
       return { ...state, current: state.current + digit };
     }
 
@@ -68,10 +105,10 @@ export function calculatorReducer(state, action) {
       const newTokens = commitCurrent
         ? [
             ...state.tokens,
-            { type: 'number', value: state.current },
-            { type: 'op', value: operator },
+            { type: 'number' as const, value: state.current },
+            { type: 'op' as const, value: operator },
           ]
-        : [...state.tokens, { type: 'op', value: operator }];
+        : [...state.tokens, { type: 'op' as const, value: operator }];
 
       return { ...state, tokens: newTokens, previous: state.current, operator, overwrite: true };
     }
@@ -113,7 +150,7 @@ export function calculatorReducer(state, action) {
       const fullTokens =
         last?.type === 'paren' && last?.value === ')'
           ? state.tokens
-          : [...state.tokens, { type: 'number', value: state.current }];
+          : [...state.tokens, { type: 'number' as const, value: state.current }];
       const result = evaluateTokens(fullTokens);
       return {
         ...state,
@@ -129,7 +166,7 @@ export function calculatorReducer(state, action) {
       if (state.current === 'Error') return state;
       try {
         const current = new Big(state.current);
-        let result;
+        let result: Big;
         if (state.previous !== null && (state.operator === '+' || state.operator === '-')) {
           result = current.div(100).times(new Big(state.previous));
         } else {
@@ -153,7 +190,7 @@ export function calculatorReducer(state, action) {
       if (!canOpen) return state;
       return {
         ...state,
-        tokens: [...state.tokens, { type: 'paren', value: '(' }],
+        tokens: [...state.tokens, { type: 'paren' as const, value: '(' }],
         current: '0',
         overwrite: false,
       };
@@ -167,11 +204,11 @@ export function calculatorReducer(state, action) {
       if (last?.value === '(') return state;
       const newTokens =
         last?.type === 'paren' && last?.value === ')'
-          ? [...state.tokens, { type: 'paren', value: ')' }]
+          ? [...state.tokens, { type: 'paren' as const, value: ')' }]
           : [
               ...state.tokens,
-              { type: 'number', value: state.current },
-              { type: 'paren', value: ')' },
+              { type: 'number' as const, value: state.current },
+              { type: 'paren' as const, value: ')' },
             ];
       return { ...state, tokens: newTokens, overwrite: true };
     }
@@ -186,7 +223,7 @@ export function calculatorReducer(state, action) {
       return { ...state, angleMode: state.angleMode === 'deg' ? 'rad' : 'deg' };
 
     case ACTIONS.INSERT_CONSTANT: {
-      const constants = { π: String(Math.PI), e: String(Math.E) };
+      const constants: Record<string, string> = { π: String(Math.PI), e: String(Math.E) };
       const value = constants[action.constant];
       if (!value) return state;
       return { ...state, current: value, overwrite: true };

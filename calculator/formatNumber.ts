@@ -1,6 +1,6 @@
 const FORMATTER = new Intl.NumberFormat('en-US');
 
-export function formatNumber(value, precision = 10) {
+export function formatNumber(value: string, precision: number = 10): string {
   if (!value || value === 'Error') return value;
   if (value.includes('e')) return value; // scientific notation mid-input — show as-is
 

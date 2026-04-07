@@ -36,14 +36,14 @@ npx jest --watch   # watch mode
 
 ## Tech stack
 
-| | |
-|---|---|
-| Runtime | Expo SDK 54 / React Native 0.81.5 / React 19 |
-| Architecture | New Architecture enabled (`newArchEnabled: true`) |
-| Math | `big.js` for float-safe arithmetic |
-| State | `useReducer` + React Context + AsyncStorage |
-| Navigation | React Navigation bottom tabs |
-| Gestures | `react-native-gesture-handler` (swipe left to delete digit) |
+|              |                                                             |
+| ------------ | ----------------------------------------------------------- |
+| Runtime      | Expo SDK 54 / React Native 0.81.5 / React 19                |
+| Architecture | New Architecture enabled (`newArchEnabled: true`)           |
+| Math         | `big.js` for float-safe arithmetic                          |
+| State        | `useReducer` + React Context + AsyncStorage                 |
+| Navigation   | React Navigation bottom tabs                                |
+| Gestures     | `react-native-gesture-handler` (swipe left to delete digit) |
 
 ## Project structure
 

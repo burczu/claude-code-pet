@@ -1,4 +1,23 @@
-export const THEMES = {
+export interface Theme {
+  background: string;
+  display: string;
+  currentText: string;
+  expressionText: string;
+  numberBtn: string;
+  operatorBtn: string;
+  functionBtn: string;
+  numberText: string;
+  operatorText: string;
+  functionText: string;
+  scientificBtn: string;
+  scientificText: string;
+  historyBg: string;
+  historyText: string;
+  historySubText: string;
+  separator: string;
+}
+
+export const THEMES: Record<'dark' | 'light', Theme> = {
   dark: {
     background: '#000000',
     display: '#000000',

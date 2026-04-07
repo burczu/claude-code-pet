@@ -1,13 +1,41 @@
 import { memo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ACTIONS } from '../calculator/reducer';
+import { ACTIONS, CalculatorAction } from '../calculator/reducer';
+import { ScientificFn, Operator, AngleMode } from '../calculator/mathEngine';
+import { Theme } from '../theme/colors';
 
-// action kinds: 'fn' | 'op' | 'constant' | 'toggle_angle' | 'toggle_second'
-//               'memory_add' | 'memory_sub' | 'memory_recall' | 'memory_clear'
-//               'ee' | 'paren_open' | 'paren_close'
+type ActionKind =
+  | { kind: 'fn'; fn: ScientificFn }
+  | { kind: 'op'; op: Operator }
+  | { kind: 'constant'; constant: string }
+  | { kind: 'toggle_angle' }
+  | { kind: 'toggle_second' }
+  | { kind: 'memory_add' }
+  | { kind: 'memory_sub' }
+  | { kind: 'memory_recall' }
+  | { kind: 'memory_clear' }
+  | { kind: 'ee' }
+  | { kind: 'paren_open' }
+  | { kind: 'paren_close' };
+
+interface ButtonDef {
+  pl: string;
+  sl: string;
+  pa: ActionKind;
+  sa: ActionKind;
+  angleLabel?: boolean;
+  memoryBtn?: boolean;
+}
+
+const SCIENTIFIC_BTN_HEIGHT_RATIO = 0.72;
+const DIMMED_OPACITY = 0.35;
+const PRESSED_OPACITY = 0.6;
+const SCI_FONT_SIZE_MULTIPLIER = 0.28;
+const LANDSCAPE_GAP = 12;
+const PORTRAIT_GAP = 6;
 
 // Landscape: 4 cols × 5 rows
-const ROWS_LANDSCAPE = [
+const ROWS_LANDSCAPE: ButtonDef[][] = [
   [
     { pl: '2nd', sl: '2nd', pa: { kind: 'toggle_second' }, sa: { kind: 'toggle_second' } },
     { pl: 'x²', sl: '√x', pa: { kind: 'fn', fn: 'x²' }, sa: { kind: 'fn', fn: '√' } },
@@ -51,8 +79,20 @@ const ROWS_LANDSCAPE = [
       sa: { kind: 'memory_clear' },
       memoryBtn: true,
     },
-    { pl: 'm+', sl: 'm+', pa: { kind: 'memory_add' }, sa: { kind: 'memory_add' }, memoryBtn: true },
-    { pl: 'm−', sl: 'm−', pa: { kind: 'memory_sub' }, sa: { kind: 'memory_sub' }, memoryBtn: true },
+    {
+      pl: 'm+',
+      sl: 'm+',
+      pa: { kind: 'memory_add' },
+      sa: { kind: 'memory_add' },
+      memoryBtn: true,
+    },
+    {
+      pl: 'm−',
+      sl: 'm−',
+      pa: { kind: 'memory_sub' },
+      sa: { kind: 'memory_sub' },
+      memoryBtn: true,
+    },
     {
       pl: 'mr',
       sl: 'mr',
@@ -64,7 +104,7 @@ const ROWS_LANDSCAPE = [
 ];
 
 // Portrait: 6 cols × 5 rows (Apple-style layout)
-const ROWS_PORTRAIT = [
+const ROWS_PORTRAIT: ButtonDef[][] = [
   [
     { pl: '(', sl: '(', pa: { kind: 'paren_open' }, sa: { kind: 'paren_open' } },
     { pl: ')', sl: ')', pa: { kind: 'paren_close' }, sa: { kind: 'paren_close' } },
@@ -75,8 +115,20 @@ const ROWS_PORTRAIT = [
       sa: { kind: 'memory_clear' },
       memoryBtn: true,
     },
-    { pl: 'm+', sl: 'm+', pa: { kind: 'memory_add' }, sa: { kind: 'memory_add' }, memoryBtn: true },
-    { pl: 'm−', sl: 'm−', pa: { kind: 'memory_sub' }, sa: { kind: 'memory_sub' }, memoryBtn: true },
+    {
+      pl: 'm+',
+      sl: 'm+',
+      pa: { kind: 'memory_add' },
+      sa: { kind: 'memory_add' },
+      memoryBtn: true,
+    },
+    {
+      pl: 'm−',
+      sl: 'm−',
+      pa: { kind: 'memory_sub' },
+      sa: { kind: 'memory_sub' },
+      memoryBtn: true,
+    },
     {
       pl: 'mr',
       sl: 'mr',
@@ -135,8 +187,26 @@ const ROWS_PORTRAIT = [
   ],
 ];
 
-function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, active, dimmed }) {
-  const h = buttonHeight ?? buttonSize * 0.72;
+interface ScientificButtonProps {
+  label: string;
+  onPress: () => void;
+  buttonSize: number;
+  buttonHeight?: number | undefined;
+  theme: Theme;
+  active?: boolean | undefined;
+  dimmed?: boolean | undefined;
+}
+
+function ScientificButton({
+  label,
+  onPress,
+  buttonSize,
+  buttonHeight,
+  theme,
+  active = false,
+  dimmed = false,
+}: ScientificButtonProps) {
+  const h = buttonHeight ?? buttonSize * SCIENTIFIC_BTN_HEIGHT_RATIO;
   return (
     <Pressable
       onPress={onPress}
@@ -147,7 +217,7 @@ function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, act
           height: h,
           borderRadius: 6,
           backgroundColor: active ? theme.scientificText : theme.scientificBtn,
-          opacity: dimmed ? 0.35 : pressed ? 0.6 : 1,
+          opacity: dimmed ? DIMMED_OPACITY : pressed ? PRESSED_OPACITY : 1,
         },
       ]}
     >
@@ -156,7 +226,7 @@ function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, act
           styles.label,
           {
             color: active ? theme.scientificBtn : theme.scientificText,
-            fontSize: Math.min(buttonSize, h) * 0.28,
+            fontSize: Math.min(buttonSize, h) * SCI_FONT_SIZE_MULTIPLIER,
           },
         ]}
       >
@@ -164,6 +234,16 @@ function ScientificButton({ label, onPress, buttonSize, buttonHeight, theme, act
       </Text>
     </Pressable>
   );
+}
+
+interface ScientificPanelProps {
+  dispatch: (action: CalculatorAction) => void;
+  buttonSize: number;
+  buttonHeight?: number | undefined;
+  theme: Theme;
+  angleMode?: AngleMode | undefined;
+  memory?: string | undefined;
+  orientation?: 'landscape' | 'portrait' | undefined;
 }
 
 export default memo(function ScientificPanel({
@@ -174,13 +254,13 @@ export default memo(function ScientificPanel({
   angleMode = 'deg',
   memory = '0',
   orientation = 'landscape',
-}) {
+}: ScientificPanelProps) {
   const [second, setSecond] = useState(false);
   const hasMemory = memory !== '0';
   const rows = orientation === 'portrait' ? ROWS_PORTRAIT : ROWS_LANDSCAPE;
 
   const handlePress = useCallback(
-    (btn) => {
+    (btn: ButtonDef) => {
       const action = second ? btn.sa : btn.pa;
 
       switch (action.kind) {
@@ -231,17 +311,17 @@ export default memo(function ScientificPanel({
       style={[
         styles.panel,
         orientation === 'portrait' && styles.panelPortrait,
-        { gap: orientation === 'portrait' ? 6 : 12 },
+        { gap: orientation === 'portrait' ? PORTRAIT_GAP : LANDSCAPE_GAP },
       ]}
     >
       {rows.map((row, ri) => (
         <View key={ri} style={[styles.row, { gap: buttonSize * 0.12 }]}>
-          {row.map((btn, ci) => {
+          {row.map((btn) => {
             const isAngleBtn = btn.angleLabel;
             const label = isAngleBtn ? angleMode.toUpperCase() : second ? btn.sl : btn.pl;
             const isSecondActive = btn.pa.kind === 'toggle_second' && second;
             const isMemoryDimmed =
-              btn.memoryBtn &&
+              btn.memoryBtn === true &&
               !hasMemory &&
               (btn.pa.kind === 'memory_clear' || btn.pa.kind === 'memory_recall');
 

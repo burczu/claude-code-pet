@@ -9,6 +9,10 @@ import SettingsScreen from './screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
+const LANDSCAPE_TAB_HEIGHT = 50;
+const LANDSCAPE_TAB_PADDING_BOTTOM = 4;
+const LANDSCAPE_TAB_PADDING_TOP = 3;
+
 export default function App() {
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -21,7 +25,11 @@ export default function App() {
             screenOptions={{
               animation: 'shift',
               tabBarStyle: isLandscape
-                ? { height: 50, paddingBottom: 4, paddingTop: 3 }
+                ? {
+                    height: LANDSCAPE_TAB_HEIGHT,
+                    paddingBottom: LANDSCAPE_TAB_PADDING_BOTTOM,
+                    paddingTop: LANDSCAPE_TAB_PADDING_TOP,
+                  }
                 : undefined,
             }}
           >

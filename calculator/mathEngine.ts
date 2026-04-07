@@ -1,24 +1,65 @@
 import Big from 'big.js';
 
+export type AngleMode = 'deg' | 'rad';
+export type Operator = '+' | '-' | '×' | '÷' | 'xʸ' | 'y√x';
+export type ScientificFn =
+  | 'sin'
+  | 'cos'
+  | 'tan'
+  | 'asin'
+  | 'acos'
+  | 'atan'
+  | 'sinh'
+  | 'cosh'
+  | 'tanh'
+  | 'asinh'
+  | 'acosh'
+  | 'atanh'
+  | 'x²'
+  | 'x³'
+  | '√'
+  | '³√'
+  | 'eˣ'
+  | '10ˣ'
+  | 'ln'
+  | 'log'
+  | '1/x'
+  | 'x!'
+  | 'Rand';
+
+export type TokenType = 'number' | 'op' | 'paren';
+export interface Token {
+  type: TokenType;
+  value: string;
+}
+
+type RpnItem = string | { op: string };
+
 const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
+const MAX_FACTORIAL = 170;
+const FACTORIAL_TOLERANCE = 1e-9;
 
-function toRad(n, angleMode) {
+function toRad(n: number, angleMode: AngleMode): number {
   return angleMode === 'deg' ? n * DEG_TO_RAD : n;
 }
 
-function fromRad(n, angleMode) {
+function fromRad(n: number, angleMode: AngleMode): number {
   return angleMode === 'deg' ? n * RAD_TO_DEG : n;
 }
 
-function factorial(n) {
-  if (n < 0 || !Number.isInteger(n) || n > 170) throw new Error('Invalid');
+function factorial(n: number): number {
+  if (n < 0 || !Number.isInteger(n) || n > MAX_FACTORIAL) throw new Error('Invalid');
   let result = 1;
   for (let i = 2; i <= n; i++) result *= i;
   return result;
 }
 
-export function applyScientific(current, fn, angleMode = 'deg') {
+export function applyScientific(
+  current: string,
+  fn: ScientificFn,
+  angleMode: AngleMode = 'deg',
+): string {
   try {
     const n = parseFloat(current);
     const big = new Big(current);
@@ -77,14 +118,11 @@ export function applyScientific(current, fn, angleMode = 'deg') {
       // Misc
       case 'x!': {
         const int = Math.round(n);
-        if (n < 0 || Math.abs(n - int) > 1e-9) return 'Error';
+        if (n < 0 || Math.abs(n - int) > FACTORIAL_TOLERANCE) return 'Error';
         return new Big(factorial(int)).toFixed();
       }
       case 'Rand':
         return String(Math.random());
-
-      default:
-        return 'Error';
     }
   } catch {
     return 'Error';
@@ -92,10 +130,10 @@ export function applyScientific(current, fn, angleMode = 'deg') {
 }
 
 // Operator precedence and associativity for shunting-yard
-const PREC = { '+': 1, '-': 1, '×': 2, '÷': 2, xʸ: 3, 'y√x': 3 };
+const PREC: Record<string, number> = { '+': 1, '-': 1, '×': 2, '÷': 2, xʸ: 3, 'y√x': 3 };
 const RIGHT_ASSOC = new Set(['xʸ']);
 
-function applyOp(a, b, op) {
+function applyOp(a: Big, b: Big, op: string): Big {
   switch (op) {
     case '+':
       return a.plus(b);
@@ -124,10 +162,10 @@ function applyOp(a, b, op) {
 }
 
 // Evaluate a token list [{type:'number'|'op'|'paren', value:string}] using shunting-yard.
-export function evaluateTokens(tokens) {
+export function evaluateTokens(tokens: Token[]): string {
   try {
-    const output = []; // postfix queue
-    const ops = []; // operator stack
+    const output: RpnItem[] = []; // postfix queue
+    const ops: string[] = []; // operator stack
 
     for (const tok of tokens) {
       if (tok.type === 'number') {
@@ -136,41 +174,41 @@ export function evaluateTokens(tokens) {
         while (
           ops.length &&
           ops[ops.length - 1] !== '(' &&
-          (PREC[ops[ops.length - 1]] > PREC[tok.value] ||
-            (PREC[ops[ops.length - 1]] === PREC[tok.value] && !RIGHT_ASSOC.has(tok.value)))
+          (PREC[ops[ops.length - 1]!]! > PREC[tok.value]! ||
+            (PREC[ops[ops.length - 1]!] === PREC[tok.value] && !RIGHT_ASSOC.has(tok.value)))
         ) {
-          output.push({ op: ops.pop() });
+          output.push({ op: ops.pop()! });
         }
         ops.push(tok.value);
       } else if (tok.value === '(') {
         ops.push('(');
       } else if (tok.value === ')') {
-        while (ops.length && ops[ops.length - 1] !== '(') output.push({ op: ops.pop() });
+        while (ops.length && ops[ops.length - 1] !== '(') output.push({ op: ops.pop()! });
         ops.pop(); // discard '('
       }
     }
-    while (ops.length) output.push({ op: ops.pop() });
+    while (ops.length) output.push({ op: ops.pop()! });
 
     // Evaluate RPN — numbers are strings, operators are { op: string }
-    const stack = [];
+    const stack: Big[] = [];
     for (const item of output) {
       if (typeof item === 'string') {
         stack.push(new Big(item));
       } else {
-        const b = stack.pop();
-        const a = stack.pop();
+        const b = stack.pop()!;
+        const a = stack.pop()!;
         stack.push(applyOp(a, b, item.op));
       }
     }
 
     if (stack.length !== 1) return 'Error';
-    return stack[0].toFixed();
+    return stack[0]!.toFixed();
   } catch {
     return 'Error';
   }
 }
 
-export function evaluate(previous, current, operator) {
+export function evaluate(previous: string, current: string, operator: string): string {
   try {
     const a = new Big(previous);
     const b = new Big(current);

@@ -27,10 +27,14 @@ import {
   Sun,
   Vibrate,
 } from 'lucide-react-native';
-import { useSettings } from '../store/SettingsContext';
-import { clearHistory, getHistory } from '../services/historyService';
-import { THEMES } from '../theme/colors';
+import { useSettings, Settings } from '../store/SettingsContext';
+import { clearHistory, getHistory, HistoryItem as HistoryItemData } from '../services/historyService';
+import { THEMES, Theme } from '../theme/colors';
 import { formatNumber } from '../calculator/formatNumber';
+
+const MIN_PRECISION = 0;
+const MAX_PRECISION = 10;
+const PRECISION_STEP = 1;
 
 const ACCENT_COLORS = [
   '#ff9f0a',
@@ -43,18 +47,26 @@ const ACCENT_COLORS = [
   '#ff6b00',
 ];
 
-const THEME_OPTIONS = [
+const THEME_OPTIONS: Array<{ label: string; value: Settings['theme'] }> = [
   { label: 'Light', value: 'light' },
   { label: 'Dark', value: 'dark' },
   { label: 'System', value: 'system' },
 ];
 
-const HistoryItem = memo(function HistoryItem({ item, onPress, theme, precision }) {
-  const dateStr = item.timestamp
-    ? new Date(item.timestamp).toLocaleString()
-    : item.date
-      ? new Date(item.date).toLocaleString()
-      : '';
+interface HistoryItemProps {
+  item: HistoryItemData;
+  onPress: (result: string) => void;
+  theme: Theme;
+  precision: number;
+}
+
+const HistoryItemRow = memo(function HistoryItemRow({
+  item,
+  onPress,
+  theme,
+  precision,
+}: HistoryItemProps) {
+  const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : '';
 
   return (
     <TouchableOpacity
@@ -75,9 +87,23 @@ const HistoryItem = memo(function HistoryItem({ item, onPress, theme, precision 
   );
 });
 
-const SectionCard = memo(function SectionCard({ children, theme }) {
+interface SectionCardProps {
+  children: React.ReactNode;
+  theme: Theme;
+}
+
+const SectionCard = memo(function SectionCard({ children, theme }: SectionCardProps) {
   return <View style={[styles.card, { backgroundColor: theme.historyBg }]}>{children}</View>;
 });
+
+interface SettingRowProps {
+  icon?: React.ReactNode;
+  label: string;
+  children?: React.ReactNode;
+  theme: Theme;
+  last?: boolean | undefined;
+  onPress?: (() => void) | undefined;
+}
 
 const SettingRow = memo(function SettingRow({
   icon,
@@ -86,7 +112,7 @@ const SettingRow = memo(function SettingRow({
   theme,
   last = false,
   onPress,
-}) {
+}: SettingRowProps) {
   const Container = onPress ? TouchableOpacity : View;
   return (
     <Container
@@ -110,7 +136,7 @@ const SettingRow = memo(function SettingRow({
 });
 
 export default function SettingsScreen() {
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<HistoryItemData[]>([]);
   const { resolvedScheme, settings, updateSetting } = useSettings();
   const theme = THEMES[resolvedScheme];
   const navigation = useNavigation();
@@ -140,7 +166,8 @@ export default function SettingsScreen() {
   }, []);
 
   const handleItemPress = useCallback(
-    (result) => {
+    (result: string) => {
+      // @ts-expect-error — untyped navigator params
       navigation.navigate('Home', { initialValue: result });
     },
     [navigation],
@@ -150,11 +177,7 @@ export default function SettingsScreen() {
     if (history.length === 0) return;
     const text = history
       .map((item) => {
-        const dateStr = item.timestamp
-          ? new Date(item.timestamp).toLocaleString()
-          : item.date
-            ? new Date(item.date).toLocaleString()
-            : '';
+        const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : '';
         return `${item.result}  —  ${dateStr}`;
       })
       .join('\n');
@@ -258,9 +281,9 @@ export default function SettingsScreen() {
           >
             <Slider
               style={styles.slider}
-              minimumValue={0}
-              maximumValue={10}
-              step={1}
+              minimumValue={MIN_PRECISION}
+              maximumValue={MAX_PRECISION}
+              step={PRECISION_STEP}
               value={settings.precision}
               onValueChange={(v) => updateSetting('precision', v)}
               minimumTrackTintColor={settings.accentColor}
@@ -282,7 +305,7 @@ export default function SettingsScreen() {
             }
             label="Share History"
             theme={theme}
-            onPress={history.length > 0 ? handleShareHistory : undefined}
+            onPress={history.length > 0 ? () => { handleShareHistory(); } : undefined}
           >
             <ChevronRight
               size={18}
@@ -354,7 +377,7 @@ export default function SettingsScreen() {
           <View style={[styles.separator, { backgroundColor: theme.separator }]} />
         )}
         renderItem={({ item }) => (
-          <HistoryItem
+          <HistoryItemRow
             item={item}
             onPress={handleItemPress}
             theme={theme}

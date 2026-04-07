@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import CalcButton from '../components/CalcButton';
 import ScientificPanel from '../components/ScientificPanel';
-import { ACTIONS, calculatorReducer, initialState } from '../calculator/reducer';
+import { ACTIONS, CalculatorAction, calculatorReducer, initialState } from '../calculator/reducer';
 import { formatNumber } from '../calculator/formatNumber';
 import { THEMES } from '../theme/colors';
 import { useSettings } from '../store/SettingsContext';
@@ -13,32 +13,73 @@ import { pushHistory } from '../services/historyService';
 
 const GAP = 12;
 const COLS = 4;
+const ROWS = 5;
+const SCI_COLS_LANDSCAPE = 4;
+const SCI_COLS_PORTRAIT = 6;
+const SCI_PANEL_WIDTH_RATIO = 0.45;
+const TAB_BAR_HEIGHT_ESTIMATE = 83;
+const PORTRAIT_SCI_DISPLAY_HEIGHT = 60;
+const PORTRAIT_SCI_SHARED_HEIGHT_MIN = 18;
+const SCIENTIFIC_ROW_GAP_EXTRA = 6;
+const PORTRAIT_SCI_PADDING = 12;
+const SWIPE_THRESHOLD_X = 40;
+const SWIPE_THRESHOLD_Y = 40;
 
 const BUTTONS = [
-  { label: 'AC', type: 'function', action: { type: ACTIONS.CLEAR } },
-  { label: '+/-', type: 'function', action: { type: ACTIONS.ADD_DIGIT, digit: '-' } },
-  { label: '%', type: 'function', action: { type: ACTIONS.PERCENT } },
-  { label: '÷', type: 'operator', action: { type: ACTIONS.CHOOSE_OPERATION, operator: '÷' } },
+  { label: 'AC', type: 'function' as const, action: { type: ACTIONS.CLEAR } },
+  {
+    label: '+/-',
+    type: 'function' as const,
+    action: { type: ACTIONS.ADD_DIGIT, digit: '-' },
+  },
+  { label: '%', type: 'function' as const, action: { type: ACTIONS.PERCENT } },
+  {
+    label: '÷',
+    type: 'operator' as const,
+    action: { type: ACTIONS.CHOOSE_OPERATION, operator: '÷' as const },
+  },
 
-  { label: '7', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '7' } },
-  { label: '8', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '8' } },
-  { label: '9', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '9' } },
-  { label: '×', type: 'operator', action: { type: ACTIONS.CHOOSE_OPERATION, operator: '×' } },
+  { label: '7', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '7' } },
+  { label: '8', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '8' } },
+  { label: '9', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '9' } },
+  {
+    label: '×',
+    type: 'operator' as const,
+    action: { type: ACTIONS.CHOOSE_OPERATION, operator: '×' as const },
+  },
 
-  { label: '4', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '4' } },
-  { label: '5', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '5' } },
-  { label: '6', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '6' } },
-  { label: '-', type: 'operator', action: { type: ACTIONS.CHOOSE_OPERATION, operator: '-' } },
+  { label: '4', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '4' } },
+  { label: '5', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '5' } },
+  { label: '6', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '6' } },
+  {
+    label: '-',
+    type: 'operator' as const,
+    action: { type: ACTIONS.CHOOSE_OPERATION, operator: '-' as const },
+  },
 
-  { label: '1', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '1' } },
-  { label: '2', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '2' } },
-  { label: '3', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '3' } },
-  { label: '+', type: 'operator', action: { type: ACTIONS.CHOOSE_OPERATION, operator: '+' } },
+  { label: '1', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '1' } },
+  { label: '2', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '2' } },
+  { label: '3', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '3' } },
+  {
+    label: '+',
+    type: 'operator' as const,
+    action: { type: ACTIONS.CHOOSE_OPERATION, operator: '+' as const },
+  },
 
-  { label: '0', type: 'number', wide: true, action: { type: ACTIONS.ADD_DIGIT, digit: '0' } },
-  { label: '.', type: 'number', action: { type: ACTIONS.ADD_DIGIT, digit: '.' } },
-  { label: '=', type: 'operator', action: { type: ACTIONS.EVALUATE } },
-];
+  {
+    label: '0',
+    type: 'number' as const,
+    wide: true,
+    action: { type: ACTIONS.ADD_DIGIT, digit: '0' },
+  },
+  { label: '.', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '.' } },
+  { label: '=', type: 'operator' as const, action: { type: ACTIONS.EVALUATE } },
+] satisfies Array<{
+  label: string;
+  type: 'number' | 'operator' | 'function';
+  wide?: boolean;
+  action: CalculatorAction;
+}>;
 
 export default function MainScreen() {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
@@ -47,15 +88,14 @@ export default function MainScreen() {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const [container, setContainer] = useState({ width: 0, height: 0 });
-  const onLayout = useCallback((e) => {
-    const { width: w, height: h } = e.nativeEvent.layout;
-    setContainer((prev) =>
-      prev.width === w && prev.height === h ? prev : { width: w, height: h },
-    );
+
+  const onLayout = useCallback((evt: LayoutChangeEvent) => {
+    const { width: w, height: h } = evt.nativeEvent.layout;
+    setContainer((prev) => (prev.width === w && prev.height === h ? prev : { width: w, height: h }));
   }, []);
 
   useEffect(() => {
-    const value = route.params?.initialValue;
+    const value = (route.params as { initialValue?: string } | undefined)?.initialValue;
     if (value) {
       dispatch({ type: ACTIONS.CLEAR });
       String(value)
@@ -64,37 +104,39 @@ export default function MainScreen() {
           dispatch({ type: ACTIONS.ADD_DIGIT, digit });
         });
     }
-  }, [route.params?.initialValue]);
+  }, [(route.params as { initialValue?: string } | undefined)?.initialValue]);
+
   const theme = useMemo(
     () => ({ ...THEMES[resolvedScheme], operatorBtn: settings.accentColor }),
     [resolvedScheme, settings.accentColor],
   );
-  const isLandscape = width > height;
 
-  const SCI_COLS = 4; // landscape
-  const SCI_COLS_PORTRAIT = 6; // portrait
-  const ROWS = 5;
+  const isLandscape = width > height;
   const showScientific = settings.scientificMode;
+
   // Use measured container size (accounts for tab bar, safe areas, nav chrome).
   // Fall back to window-based estimate before first layout fires.
   const cw = container.width || width - insets.left - insets.right;
-  const ch = container.height || height - insets.top - insets.bottom - 83; // 83 ≈ tab bar
+  const ch = container.height || height - insets.top - insets.bottom - TAB_BAR_HEIGHT_ESTIMATE;
 
-  const sciPanelRatio = isLandscape && showScientific ? 0.45 : 0;
+  const sciPanelRatio = isLandscape && showScientific ? SCI_PANEL_WIDTH_RATIO : 0;
   const calcWidth = isLandscape && showScientific ? cw * (1 - sciPanelRatio) : cw;
 
   // Width-based: how wide each button can be given the column count
   const buttonSize = (calcWidth - GAP * (COLS + 1)) / COLS;
 
   // Portrait scientific: share available height equally across all 10 rows (5 sci + 5 basic)
-  // Total overhead: display(120) + grid gaps(72) + sci gaps(36) = 228
-  const portraitSciDisplayHeight = 60;
   const portraitSciSharedHeight =
     !isLandscape && showScientific && ch > 0
       ? Math.max(
-          (ch - portraitSciDisplayHeight - (ROWS - 1) * GAP - 2 * GAP - (ROWS - 1) * 6 - 12) /
+          (ch -
+            PORTRAIT_SCI_DISPLAY_HEIGHT -
+            (ROWS - 1) * GAP -
+            2 * GAP -
+            (ROWS - 1) * SCIENTIFIC_ROW_GAP_EXTRA -
+            PORTRAIT_SCI_PADDING) /
             (ROWS + ROWS),
-          18,
+          PORTRAIT_SCI_SHARED_HEIGHT_MIN,
         )
       : null;
 
@@ -105,7 +147,9 @@ export default function MainScreen() {
 
   // Landscape: scientific panel on the left at 45% width
   const sciButtonSize =
-    isLandscape && showScientific ? (cw * sciPanelRatio - GAP * (SCI_COLS + 1)) / SCI_COLS : 0;
+    isLandscape && showScientific
+      ? (cw * sciPanelRatio - GAP * (SCI_COLS_LANDSCAPE + 1)) / SCI_COLS_LANDSCAPE
+      : 0;
 
   // Portrait: 6-col panel, paddingHorizontal=12 each side, row gap = buttonSize*0.12
   // Solve: 6*bs + 5*(bs*0.12) + 24 = cw → bs = (cw-24)/6.6
@@ -115,19 +159,21 @@ export default function MainScreen() {
       : 0;
   const sciPortraitButtonHeight = portraitSciSharedHeight ?? 0;
 
-  const historyTimer = useRef(null);
+  const historyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!state.overwrite || state.tokens.length > 0) return;
     if (state.current === '0' || state.current === 'Error') return;
-    clearTimeout(historyTimer.current);
+    if (historyTimer.current) clearTimeout(historyTimer.current);
     historyTimer.current = setTimeout(() => pushHistory('', state.current), 500);
-    return () => clearTimeout(historyTimer.current);
+    return () => {
+      if (historyTimer.current) clearTimeout(historyTimer.current);
+    };
   }, [state.current, state.overwrite]);
 
   const swipe = Gesture.Pan()
     .runOnJS(true)
-    .onEnd((e) => {
-      if (Math.abs(e.translationX) > 40 && Math.abs(e.translationY) < 40) {
+    .onEnd((evt) => {
+      if (Math.abs(evt.translationX) > SWIPE_THRESHOLD_X && Math.abs(evt.translationY) < SWIPE_THRESHOLD_Y) {
         dispatch({ type: ACTIONS.DELETE_DIGIT });
       }
     });
@@ -169,7 +215,8 @@ export default function MainScreen() {
               style={[
                 styles.display,
                 isLandscape && styles.displayLandscape,
-                !isLandscape && showScientific && { flex: 0, height: portraitSciDisplayHeight },
+                !isLandscape &&
+                  showScientific && { flex: 0, height: PORTRAIT_SCI_DISPLAY_HEIGHT },
               ]}
             >
               <View style={[styles.indicators, isLandscape && styles.indicatorsLandscape]}>
@@ -250,7 +297,7 @@ export default function MainScreen() {
                 buttonHeight={buttonHeight}
                 theme={theme}
                 hapticsEnabled={settings.hapticsEnabled}
-                onPress={buttonHandlers[index]}
+                onPress={buttonHandlers[index]!}
               />
             ))}
           </View>
