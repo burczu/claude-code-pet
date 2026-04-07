@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
@@ -17,9 +18,18 @@ const LANDSCAPE_TAB_PADDING_TOP = 3;
 
 function AppNavigator() {
   const { width, height } = useWindowDimensions();
-  const { resolvedScheme } = useSettings();
+  const { resolvedScheme, settings } = useSettings();
   const isLandscape = width > height;
-  const restyleTheme = resolvedScheme === 'dark' ? darkTheme : lightTheme;
+  const restyleTheme = useMemo(() => {
+    const base = resolvedScheme === 'dark' ? darkTheme : lightTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        operatorBtn: settings.accentColor,
+      },
+    };
+  }, [resolvedScheme, settings.accentColor]);
 
   return (
     <ThemeProvider theme={restyleTheme}>
