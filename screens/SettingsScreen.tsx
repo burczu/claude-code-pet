@@ -29,8 +29,8 @@ import {
 } from 'lucide-react-native';
 import { useSettings, Settings } from '../store/SettingsContext';
 import { clearHistory, getHistory, HistoryItem as HistoryItemData } from '../services/historyService';
-import { THEMES, Theme } from '../theme/colors';
 import { formatNumber } from '../calculator/formatNumber';
+import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 const MIN_PRECISION = 0;
 const MAX_PRECISION = 10;
@@ -56,51 +56,47 @@ const THEME_OPTIONS: Array<{ label: string; value: Settings['theme'] }> = [
 interface HistoryItemProps {
   item: HistoryItemData;
   onPress: (result: string) => void;
-  theme: Theme;
   precision: number;
 }
 
-const HistoryItemRow = memo(function HistoryItemRow({
-  item,
-  onPress,
-  theme,
-  precision,
-}: HistoryItemProps) {
+const HistoryItemRow = memo(function HistoryItemRow({ item, onPress, precision }: HistoryItemProps) {
+  const { colors } = useTheme();
   const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : '';
 
   return (
     <TouchableOpacity
-      style={[styles.historyItem, { backgroundColor: theme.historyBg }]}
+      style={[styles.historyItem, { backgroundColor: colors.historyBg }]}
       onPress={() => onPress(item.result)}
       activeOpacity={0.6}
     >
       {item.equation ? (
-        <Text style={[styles.equation, { color: theme.historySubText }]} numberOfLines={1}>
+        <ThemedText variant="equation" style={{ color: colors.historySubText }} numberOfLines={1}>
           {item.equation}
-        </Text>
+        </ThemedText>
       ) : null}
-      <Text style={[styles.historyResult, { color: theme.historyText }]}>
+      <ThemedText variant="historyResult" style={{ color: colors.historyText }}>
         {formatNumber(item.result, precision)}
-      </Text>
-      <Text style={[styles.date, { color: theme.historySubText }]}>{dateStr}</Text>
+      </ThemedText>
+      <ThemedText variant="date" style={{ color: colors.historySubText }}>
+        {dateStr}
+      </ThemedText>
     </TouchableOpacity>
   );
 });
 
 interface SectionCardProps {
   children: React.ReactNode;
-  theme: Theme;
 }
 
-const SectionCard = memo(function SectionCard({ children, theme }: SectionCardProps) {
-  return <View style={[styles.card, { backgroundColor: theme.historyBg }]}>{children}</View>;
+const SectionCard = memo(function SectionCard({ children }: SectionCardProps) {
+  const { colors } = useTheme();
+  return <View style={[styles.card, { backgroundColor: colors.historyBg }]}>{children}</View>;
 });
 
 interface SettingRowProps {
   icon?: React.ReactNode;
   label: string;
   children?: React.ReactNode;
-  theme: Theme;
   last?: boolean | undefined;
   onPress?: (() => void) | undefined;
 }
@@ -109,10 +105,10 @@ const SettingRow = memo(function SettingRow({
   icon,
   label,
   children,
-  theme,
   last = false,
   onPress,
 }: SettingRowProps) {
+  const { colors } = useTheme();
   const Container = onPress ? TouchableOpacity : View;
   return (
     <Container
@@ -122,13 +118,15 @@ const SettingRow = memo(function SettingRow({
         styles.row,
         !last && {
           borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: theme.separator,
+          borderBottomColor: colors.separator,
         },
       ]}
     >
       <View style={styles.rowLeft}>
         {icon}
-        <Text style={[styles.rowLabel, { color: theme.historyText }]}>{label}</Text>
+        <ThemedText variant="rowLabel" style={{ color: colors.historyText }}>
+          {label}
+        </ThemedText>
       </View>
       <View style={styles.rowRight}>{children}</View>
     </Container>
@@ -137,8 +135,8 @@ const SettingRow = memo(function SettingRow({
 
 export default function SettingsScreen() {
   const [history, setHistory] = useState<HistoryItemData[]>([]);
-  const { resolvedScheme, settings, updateSetting } = useSettings();
-  const theme = THEMES[resolvedScheme];
+  const { settings, updateSetting } = useSettings();
+  const { colors } = useTheme();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -188,15 +186,11 @@ export default function SettingsScreen() {
     () => (
       <View>
         {/* ── Appearance ── */}
-        <Text style={[styles.sectionTitle, { color: theme.historySubText, marginTop: 4 }]}>
+        <ThemedText variant="sectionTitle" style={{ color: colors.historySubText, marginTop: 4, marginBottom: 6, marginHorizontal: 20 }}>
           APPEARANCE
-        </Text>
-        <SectionCard theme={theme}>
-          <SettingRow
-            icon={<Sun size={18} color={settings.accentColor} />}
-            label="Theme"
-            theme={theme}
-          >
+        </ThemedText>
+        <SectionCard>
+          <SettingRow icon={<Sun size={18} color={settings.accentColor} />} label="Theme">
             <View style={styles.segmented}>
               {THEME_OPTIONS.map((opt) => (
                 <Pressable
@@ -207,14 +201,12 @@ export default function SettingsScreen() {
                     settings.theme === opt.value && { backgroundColor: settings.accentColor },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.segmentText,
-                      { color: settings.theme === opt.value ? '#fff' : theme.historyText },
-                    ]}
+                  <ThemedText
+                    variant="segmentText"
+                    style={{ color: settings.theme === opt.value ? '#fff' : colors.historyText }}
                   >
                     {opt.label}
-                  </Text>
+                  </ThemedText>
                 </Pressable>
               ))}
             </View>
@@ -223,14 +215,9 @@ export default function SettingsScreen() {
           <SettingRow
             icon={<Palette size={18} color={settings.accentColor} />}
             label="Accent"
-            theme={theme}
             last
           >
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.colorScroll}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorScroll}>
               {ACCENT_COLORS.map((color) => (
                 <Pressable
                   key={color}
@@ -247,13 +234,11 @@ export default function SettingsScreen() {
         </SectionCard>
 
         {/* ── Behaviour ── */}
-        <Text style={[styles.sectionTitle, { color: theme.historySubText }]}>BEHAVIOUR</Text>
-        <SectionCard theme={theme}>
-          <SettingRow
-            icon={<Vibrate size={18} color={settings.accentColor} />}
-            label="Haptics"
-            theme={theme}
-          >
+        <ThemedText variant="sectionTitle" style={{ color: colors.historySubText, marginTop: 24, marginBottom: 6, marginHorizontal: 20 }}>
+          BEHAVIOUR
+        </ThemedText>
+        <SectionCard>
+          <SettingRow icon={<Vibrate size={18} color={settings.accentColor} />} label="Haptics">
             <Switch
               value={settings.hapticsEnabled}
               onValueChange={(v) => updateSetting('hapticsEnabled', v)}
@@ -264,7 +249,6 @@ export default function SettingsScreen() {
           <SettingRow
             icon={<FlaskConical size={18} color={settings.accentColor} />}
             label="Scientific Mode"
-            theme={theme}
           >
             <Switch
               value={settings.scientificMode}
@@ -276,7 +260,6 @@ export default function SettingsScreen() {
           <SettingRow
             icon={<Hash size={18} color={settings.accentColor} />}
             label={`Precision: ${settings.precision}`}
-            theme={theme}
             last
           >
             <Slider
@@ -287,51 +270,50 @@ export default function SettingsScreen() {
               value={settings.precision}
               onValueChange={(v) => updateSetting('precision', v)}
               minimumTrackTintColor={settings.accentColor}
-              maximumTrackTintColor={theme.separator}
+              maximumTrackTintColor={colors.separator}
               thumbTintColor={settings.accentColor}
             />
           </SettingRow>
         </SectionCard>
 
         {/* ── More ── */}
-        <Text style={[styles.sectionTitle, { color: theme.historySubText }]}>MORE</Text>
-        <SectionCard theme={theme}>
+        <ThemedText variant="sectionTitle" style={{ color: colors.historySubText, marginTop: 24, marginBottom: 6, marginHorizontal: 20 }}>
+          MORE
+        </ThemedText>
+        <SectionCard>
           <SettingRow
             icon={
               <Share2
                 size={18}
-                color={history.length === 0 ? theme.separator : settings.accentColor}
+                color={history.length === 0 ? colors.separator : settings.accentColor}
               />
             }
             label="Share History"
-            theme={theme}
             onPress={history.length > 0 ? () => { handleShareHistory(); } : undefined}
           >
             <ChevronRight
               size={18}
-              color={history.length === 0 ? theme.separator : theme.historySubText}
+              color={history.length === 0 ? colors.separator : colors.historySubText}
             />
           </SettingRow>
 
           <SettingRow
             icon={<Star size={18} color={settings.accentColor} />}
             label="Rate App"
-            theme={theme}
             onPress={() => Linking.openURL('https://apps.apple.com')}
           >
-            <ChevronRight size={18} color={theme.historySubText} />
+            <ChevronRight size={18} color={colors.historySubText} />
           </SettingRow>
 
           <SettingRow
             icon={<Info size={18} color={settings.accentColor} />}
             label="About"
-            theme={theme}
             last
             onPress={() =>
               Alert.alert('Calculator', 'Version 1.0.0\nBuilt with Expo & React Native')
             }
           >
-            <ChevronRight size={18} color={theme.historySubText} />
+            <ChevronRight size={18} color={colors.historySubText} />
           </SettingRow>
         </SectionCard>
 
@@ -339,28 +321,26 @@ export default function SettingsScreen() {
         <View style={styles.historyHeader}>
           <View style={styles.rowLeft}>
             <Clock size={18} color={settings.accentColor} />
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: theme.historySubText, marginTop: 0, marginLeft: 8 },
-              ]}
+            <ThemedText
+              variant="sectionTitle"
+              style={{ color: colors.historySubText, marginTop: 0, marginLeft: 8 }}
             >
               HISTORY
-            </Text>
+            </ThemedText>
           </View>
           {history.length > 0 && (
             <TouchableOpacity onPress={handleClearAll}>
-              <Text style={styles.clearBtn}>Clear All</Text>
+              <ThemedText variant="clearBtn">Clear All</ThemedText>
             </TouchableOpacity>
           )}
         </View>
       </View>
     ),
-    [settings, theme, history.length, updateSetting, handleShareHistory, handleClearAll],
+    [settings, colors, history.length, updateSetting, handleShareHistory, handleClearAll],
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <FlatList
         data={history}
         keyExtractor={(item, index) => item.id ?? String(index)}
@@ -368,19 +348,18 @@ export default function SettingsScreen() {
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: theme.historySubText }]}>
+            <ThemedText variant="emptyText" style={{ color: colors.historySubText }}>
               No calculations yet
-            </Text>
+            </ThemedText>
           </View>
         }
         ItemSeparatorComponent={() => (
-          <View style={[styles.separator, { backgroundColor: theme.separator }]} />
+          <View style={[styles.separator, { backgroundColor: colors.separator }]} />
         )}
         renderItem={({ item }) => (
           <HistoryItemRow
             item={item}
             onPress={handleItemPress}
-            theme={theme}
             precision={settings.precision}
           />
         )}

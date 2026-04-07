@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -7,9 +7,9 @@ import CalcButton from '../components/CalcButton';
 import ScientificPanel from '../components/ScientificPanel';
 import { ACTIONS, CalculatorAction, calculatorReducer, initialState } from '../calculator/reducer';
 import { formatNumber } from '../calculator/formatNumber';
-import { THEMES } from '../theme/colors';
 import { useSettings } from '../store/SettingsContext';
 import { pushHistory } from '../services/historyService';
+import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 const GAP = 12;
 const COLS = 4;
@@ -84,7 +84,7 @@ const BUTTONS = [
 export default function MainScreen() {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
   const { width, height } = useWindowDimensions();
-  const { resolvedScheme, settings } = useSettings();
+  const { settings } = useSettings();
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const [container, setContainer] = useState({ width: 0, height: 0 });
@@ -106,10 +106,7 @@ export default function MainScreen() {
     }
   }, [(route.params as { initialValue?: string } | undefined)?.initialValue]);
 
-  const theme = useMemo(
-    () => ({ ...THEMES[resolvedScheme], operatorBtn: settings.accentColor }),
-    [resolvedScheme, settings.accentColor],
-  );
+  const { colors } = useTheme();
 
   const isLandscape = width > height;
   const showScientific = settings.scientificMode;
@@ -193,7 +190,7 @@ export default function MainScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.safe, { backgroundColor: theme.background }]}
+      style={[styles.safe, { backgroundColor: colors.background }]}
       edges={['top', 'bottom', 'left', 'right']}
     >
       <View style={[styles.row, isLandscape && styles.rowLandscape]} onLayout={onLayout}>
@@ -203,7 +200,6 @@ export default function MainScreen() {
             dispatch={dispatch}
             buttonSize={sciButtonSize}
             buttonHeight={buttonHeight}
-            theme={theme}
             angleMode={state.angleMode}
             memory={state.memory}
           />
@@ -215,56 +211,43 @@ export default function MainScreen() {
               style={[
                 styles.display,
                 isLandscape && styles.displayLandscape,
-                !isLandscape &&
-                  showScientific && { flex: 0, height: PORTRAIT_SCI_DISPLAY_HEIGHT },
+                !isLandscape && showScientific && { flex: 0, height: PORTRAIT_SCI_DISPLAY_HEIGHT },
               ]}
             >
               <View style={[styles.indicators, isLandscape && styles.indicatorsLandscape]}>
                 {state.memory !== '0' && (
-                  <Text
-                    style={[
-                      styles.indicator,
-                      { color: theme.expressionText },
-                      isLandscape && styles.indicatorLandscape,
-                    ]}
+                  <ThemedText
+                    variant={isLandscape ? 'indicatorLandscape' : 'indicator'}
+                    style={{ color: colors.expressionText }}
                   >
                     M
-                  </Text>
+                  </ThemedText>
                 )}
                 {showScientific && state.angleMode === 'rad' && (
-                  <Text
-                    style={[
-                      styles.indicator,
-                      { color: theme.expressionText },
-                      isLandscape && styles.indicatorLandscape,
-                    ]}
+                  <ThemedText
+                    variant={isLandscape ? 'indicatorLandscape' : 'indicator'}
+                    style={{ color: colors.expressionText }}
                   >
                     RAD
-                  </Text>
+                  </ThemedText>
                 )}
               </View>
-              <Text
-                style={[
-                  styles.expression,
-                  { color: theme.expressionText },
-                  isLandscape && styles.expressionLandscape,
-                ]}
+              <ThemedText
+                variant={isLandscape ? 'expressionLandscape' : 'expression'}
+                style={{ color: colors.expressionText }}
                 numberOfLines={1}
               >
                 {expressionText}
-              </Text>
-              <Text
-                style={[
-                  styles.current,
-                  { color: theme.currentText },
-                  isLandscape && styles.currentLandscape,
-                ]}
+              </ThemedText>
+              <ThemedText
+                variant={isLandscape ? 'currentLandscape' : 'current'}
+                style={[styles.currentBase, { color: colors.currentText }]}
                 adjustsFontSizeToFit
                 numberOfLines={1}
                 minimumFontScale={0.4}
               >
                 {formatNumber(state.current, settings.precision)}
-              </Text>
+              </ThemedText>
             </View>
           </GestureDetector>
 
@@ -274,7 +257,6 @@ export default function MainScreen() {
               dispatch={dispatch}
               buttonSize={sciPortraitButtonSize}
               buttonHeight={sciPortraitButtonHeight}
-              theme={theme}
               angleMode={state.angleMode}
               memory={state.memory}
             />
@@ -295,7 +277,6 @@ export default function MainScreen() {
                 wide={btn.wide}
                 buttonSize={buttonSize}
                 buttonHeight={buttonHeight}
-                theme={theme}
                 hapticsEnabled={settings.hapticsEnabled}
                 onPress={buttonHandlers[index]!}
               />
@@ -324,16 +305,6 @@ const styles = StyleSheet.create({
   },
   indicators: { flexDirection: 'row', gap: 8, alignSelf: 'flex-end', marginBottom: 2 },
   indicatorsLandscape: { marginBottom: 0 },
-  indicator: { fontSize: 13, fontWeight: '500' },
-  indicatorLandscape: { fontSize: 11 },
-  expression: { fontSize: 24, marginBottom: 4 },
-  expressionLandscape: { fontSize: 17, marginBottom: 0 },
-  current: {
-    fontSize: 80,
-    fontWeight: '200',
-    width: '100%',
-    textAlign: 'right',
-  },
-  currentLandscape: { fontSize: 38, lineHeight: 38 },
+  currentBase: { width: '100%', textAlign: 'right' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
 });

@@ -1,8 +1,8 @@
 import { memo, useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { ACTIONS, CalculatorAction } from '../calculator/reducer';
 import { ScientificFn, Operator, AngleMode } from '../calculator/mathEngine';
-import { Theme } from '../theme/colors';
+import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 type ActionKind =
   | { kind: 'fn'; fn: ScientificFn }
@@ -192,7 +192,6 @@ interface ScientificButtonProps {
   onPress: () => void;
   buttonSize: number;
   buttonHeight?: number | undefined;
-  theme: Theme;
   active?: boolean | undefined;
   dimmed?: boolean | undefined;
 }
@@ -202,10 +201,10 @@ function ScientificButton({
   onPress,
   buttonSize,
   buttonHeight,
-  theme,
   active = false,
   dimmed = false,
 }: ScientificButtonProps) {
+  const { colors, borderRadii } = useTheme();
   const h = buttonHeight ?? buttonSize * SCIENTIFIC_BTN_HEIGHT_RATIO;
   return (
     <Pressable
@@ -215,23 +214,21 @@ function ScientificButton({
         {
           width: buttonSize,
           height: h,
-          borderRadius: 6,
-          backgroundColor: active ? theme.scientificText : theme.scientificBtn,
+          borderRadius: borderRadii.s,
+          backgroundColor: active ? colors.scientificText : colors.scientificBtn,
           opacity: dimmed ? DIMMED_OPACITY : pressed ? PRESSED_OPACITY : 1,
         },
       ]}
     >
-      <Text
-        style={[
-          styles.label,
-          {
-            color: active ? theme.scientificBtn : theme.scientificText,
-            fontSize: Math.min(buttonSize, h) * SCI_FONT_SIZE_MULTIPLIER,
-          },
-        ]}
+      <ThemedText
+        variant="buttonLabel"
+        style={{
+          color: active ? colors.scientificBtn : colors.scientificText,
+          fontSize: Math.min(buttonSize, h) * SCI_FONT_SIZE_MULTIPLIER,
+        }}
       >
         {label}
-      </Text>
+      </ThemedText>
     </Pressable>
   );
 }
@@ -240,7 +237,6 @@ interface ScientificPanelProps {
   dispatch: (action: CalculatorAction) => void;
   buttonSize: number;
   buttonHeight?: number | undefined;
-  theme: Theme;
   angleMode?: AngleMode | undefined;
   memory?: string | undefined;
   orientation?: 'landscape' | 'portrait' | undefined;
@@ -250,7 +246,6 @@ export default memo(function ScientificPanel({
   dispatch,
   buttonSize,
   buttonHeight,
-  theme,
   angleMode = 'deg',
   memory = '0',
   orientation = 'landscape',
@@ -331,7 +326,6 @@ export default memo(function ScientificPanel({
                 label={label}
                 buttonSize={buttonSize}
                 buttonHeight={buttonHeight}
-                theme={theme}
                 active={isSecondActive}
                 dimmed={isMemoryDimmed}
                 onPress={() => handlePress(btn)}

@@ -1,7 +1,7 @@
 import { memo } from 'react';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Theme } from '../theme/colors';
+import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 const PRESSED_OPACITY_IOS = 0.7;
 const FONT_SIZE_MULTIPLIER = 0.38;
@@ -13,8 +13,7 @@ interface CalcButtonProps {
   wide?: boolean | undefined;
   buttonSize: number;
   buttonHeight?: number | undefined;
-  theme: Theme;
-  hapticsEnabled?: boolean;
+  hapticsEnabled?: boolean | undefined;
 }
 
 function CalcButton({
@@ -24,30 +23,31 @@ function CalcButton({
   wide = false,
   buttonSize,
   buttonHeight,
-  theme,
   hapticsEnabled = true,
 }: CalcButtonProps) {
+  const theme = useTheme();
+
   function handlePress() {
     if (hapticsEnabled) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   }
 
-  const bg: Record<string, string> = {
-    number: theme.numberBtn,
-    operator: theme.operatorBtn,
-    function: theme.functionBtn,
-    scientific: theme.scientificBtn,
+  const bgColor: Record<string, string> = {
+    number: theme.colors.numberBtn,
+    operator: theme.colors.operatorBtn,
+    function: theme.colors.functionBtn,
+    scientific: theme.colors.scientificBtn,
   };
 
   const textColor: Record<string, string> = {
-    number: theme.numberText,
-    operator: theme.operatorText,
-    function: theme.functionText,
-    scientific: theme.scientificText,
+    number: theme.colors.numberText,
+    operator: theme.colors.operatorText,
+    function: theme.colors.functionText,
+    scientific: theme.colors.scientificText,
   };
 
   const h = buttonHeight ?? buttonSize;
-  const width = wide ? buttonSize * 2 + 12 : buttonSize;
+  const width = wide ? buttonSize * 2 + theme.spacing.m : buttonSize;
 
   return (
     <Pressable
@@ -59,14 +59,17 @@ function CalcButton({
           width,
           height: h,
           borderRadius: Math.min(width, h) / 2,
-          backgroundColor: bg[type],
+          backgroundColor: bgColor[type],
           opacity: Platform.OS === 'ios' && pressed ? PRESSED_OPACITY_IOS : 1,
         },
       ]}
     >
-      <Text style={[styles.label, { color: textColor[type], fontSize: h * FONT_SIZE_MULTIPLIER }]}>
+      <ThemedText
+        variant="buttonLabel"
+        style={{ color: textColor[type], fontSize: h * FONT_SIZE_MULTIPLIER }}
+      >
         {label}
-      </Text>
+      </ThemedText>
     </Pressable>
   );
 }
@@ -77,8 +80,5 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  label: {
-    fontWeight: '400',
   },
 });
