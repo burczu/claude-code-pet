@@ -1,5 +1,12 @@
 import Big from 'big.js';
-import { evaluateTokens, applyScientific, Token, AngleMode, ScientificFn, Operator } from './mathEngine';
+import {
+  evaluateTokens,
+  applyScientific,
+  Token,
+  AngleMode,
+  ScientificFn,
+  Operator,
+} from './mathEngine';
 
 const MAX_DISPLAY_DIGITS = 12;
 

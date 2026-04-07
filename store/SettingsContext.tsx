@@ -57,16 +57,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return () => sub.remove();
   }, []);
 
-  const updateSetting = useCallback(async <K extends keyof Settings>(
-    key: K,
-    value: Settings[K],
-  ): Promise<void> => {
-    setSettings((prev) => {
-      const updated = { ...prev, [key]: value };
-      AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+  const updateSetting = useCallback(
+    async <K extends keyof Settings>(key: K, value: Settings[K]): Promise<void> => {
+      setSettings((prev) => {
+        const updated = { ...prev, [key]: value };
+        AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    },
+    [],
+  );
 
   const resolvedScheme: NonNullable<ColorSchemeName> =
     settings.theme === 'system' ? systemScheme : settings.theme;

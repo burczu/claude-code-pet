@@ -28,13 +28,23 @@ import {
   Vibrate,
 } from 'lucide-react-native';
 import { useSettings, Settings } from '../store/SettingsContext';
-import { clearHistory, getHistory, HistoryItem as HistoryItemData } from '../services/historyService';
+import {
+  clearHistory,
+  getHistory,
+  HistoryItem as HistoryItemData,
+} from '../services/historyService';
 import { formatNumber } from '../calculator/formatNumber';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 const MIN_PRECISION = 0;
 const MAX_PRECISION = 10;
 const PRECISION_STEP = 1;
+const COLOR_DOT_SIZE = 28;
+const SLIDER_WIDTH = 140;
+const SLIDER_HEIGHT = 36;
+const ROW_MIN_HEIGHT = 52;
+const CARD_BORDER_RADIUS = 12;
+const SEGMENT_BORDER_RADIUS = 8;
 
 const ACCENT_COLORS = [
   '#ff9f0a',
@@ -59,7 +69,11 @@ interface HistoryItemProps {
   precision: number;
 }
 
-const HistoryItemRow = memo(function HistoryItemRow({ item, onPress, precision }: HistoryItemProps) {
+const HistoryItemRow = memo(function HistoryItemRow({
+  item,
+  onPress,
+  precision,
+}: HistoryItemProps) {
   const { colors } = useTheme();
   const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : '';
 
@@ -186,7 +200,15 @@ export default function SettingsScreen() {
     () => (
       <View>
         {/* ── Appearance ── */}
-        <ThemedText variant="sectionTitle" style={{ color: colors.historySubText, marginTop: 4, marginBottom: 6, marginHorizontal: 20 }}>
+        <ThemedText
+          variant="sectionTitle"
+          style={{
+            color: colors.historySubText,
+            marginTop: 4,
+            marginBottom: 6,
+            marginHorizontal: 20,
+          }}
+        >
           APPEARANCE
         </ThemedText>
         <SectionCard>
@@ -212,12 +234,12 @@ export default function SettingsScreen() {
             </View>
           </SettingRow>
 
-          <SettingRow
-            icon={<Palette size={18} color={settings.accentColor} />}
-            label="Accent"
-            last
-          >
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorScroll}>
+          <SettingRow icon={<Palette size={18} color={settings.accentColor} />} label="Accent" last>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.colorScroll}
+            >
               {ACCENT_COLORS.map((color) => (
                 <Pressable
                   key={color}
@@ -234,7 +256,15 @@ export default function SettingsScreen() {
         </SectionCard>
 
         {/* ── Behaviour ── */}
-        <ThemedText variant="sectionTitle" style={{ color: colors.historySubText, marginTop: 24, marginBottom: 6, marginHorizontal: 20 }}>
+        <ThemedText
+          variant="sectionTitle"
+          style={{
+            color: colors.historySubText,
+            marginTop: 24,
+            marginBottom: 6,
+            marginHorizontal: 20,
+          }}
+        >
           BEHAVIOUR
         </ThemedText>
         <SectionCard>
@@ -277,7 +307,15 @@ export default function SettingsScreen() {
         </SectionCard>
 
         {/* ── More ── */}
-        <ThemedText variant="sectionTitle" style={{ color: colors.historySubText, marginTop: 24, marginBottom: 6, marginHorizontal: 20 }}>
+        <ThemedText
+          variant="sectionTitle"
+          style={{
+            color: colors.historySubText,
+            marginTop: 24,
+            marginBottom: 6,
+            marginHorizontal: 20,
+          }}
+        >
           MORE
         </ThemedText>
         <SectionCard>
@@ -289,7 +327,13 @@ export default function SettingsScreen() {
               />
             }
             label="Share History"
-            onPress={history.length > 0 ? () => { handleShareHistory(); } : undefined}
+            onPress={
+              history.length > 0
+                ? () => {
+                    handleShareHistory();
+                  }
+                : undefined
+            }
           >
             <ChevronRight
               size={18}
@@ -357,11 +401,7 @@ export default function SettingsScreen() {
           <View style={[styles.separator, { backgroundColor: colors.separator }]} />
         )}
         renderItem={({ item }) => (
-          <HistoryItemRow
-            item={item}
-            onPress={handleItemPress}
-            precision={settings.precision}
-          />
+          <HistoryItemRow item={item} onPress={handleItemPress} precision={settings.precision} />
         )}
       />
     </SafeAreaView>
@@ -380,7 +420,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: CARD_BORDER_RADIUS,
     overflow: 'hidden',
   },
   row: {
@@ -389,22 +429,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    minHeight: 52,
+    minHeight: ROW_MIN_HEIGHT,
   },
   rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   rowRight: { alignItems: 'flex-end' },
-  rowLabel: { fontSize: 16 },
   segmented: {
     flexDirection: 'row',
-    borderRadius: 8,
+    borderRadius: SEGMENT_BORDER_RADIUS,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#ccc',
   },
   segment: { paddingHorizontal: 10, paddingVertical: 5 },
-  segmentText: { fontSize: 13 },
-  colorScroll: { maxHeight: 36 },
-  colorDot: { width: 28, height: 28, borderRadius: 14, marginHorizontal: 4 },
+  colorScroll: { maxHeight: COLOR_DOT_SIZE + 8 },
+  colorDot: {
+    width: COLOR_DOT_SIZE,
+    height: COLOR_DOT_SIZE,
+    borderRadius: COLOR_DOT_SIZE / 2,
+    marginHorizontal: 4,
+  },
   colorDotSelected: {
     borderWidth: 3,
     borderColor: '#fff',
@@ -413,7 +456,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  slider: { width: 140, height: 36 },
+  slider: { width: SLIDER_WIDTH, height: SLIDER_HEIGHT },
   historyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -422,12 +465,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 6,
   },
-  clearBtn: { fontSize: 14, color: '#ff3b30' },
   empty: { alignItems: 'center', paddingVertical: 24 },
-  emptyText: { fontSize: 15 },
   historyItem: { paddingHorizontal: 20, paddingVertical: 14 },
-  equation: { fontSize: 14, marginBottom: 2 },
-  historyResult: { fontSize: 26, fontWeight: '300' },
-  date: { fontSize: 13, marginTop: 4 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 20 },
 });

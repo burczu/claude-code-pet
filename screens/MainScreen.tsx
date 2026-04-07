@@ -18,6 +18,10 @@ const SCI_COLS_LANDSCAPE = 4;
 const SCI_COLS_PORTRAIT = 6;
 const SCI_PANEL_WIDTH_RATIO = 0.45;
 const TAB_BAR_HEIGHT_ESTIMATE = 83;
+const LANDSCAPE_DISPLAY_RESERVE = 72;
+const LANDSCAPE_ROW_PADDING_TOP = 12;
+// Portrait sci layout: row gap inside sci panel uses a proportional ratio
+const SCI_ROW_GAP_RATIO = 0.12;
 const PORTRAIT_SCI_DISPLAY_HEIGHT = 60;
 const PORTRAIT_SCI_SHARED_HEIGHT_MIN = 18;
 const SCIENTIFIC_ROW_GAP_EXTRA = 6;
@@ -91,7 +95,9 @@ export default function MainScreen() {
 
   const onLayout = useCallback((evt: LayoutChangeEvent) => {
     const { width: w, height: h } = evt.nativeEvent.layout;
-    setContainer((prev) => (prev.width === w && prev.height === h ? prev : { width: w, height: h }));
+    setContainer((prev) =>
+      prev.width === w && prev.height === h ? prev : { width: w, height: h },
+    );
   }, []);
 
   useEffect(() => {
@@ -139,7 +145,7 @@ export default function MainScreen() {
 
   // Height-based: how tall each button can be to fit all rows
   const buttonHeight = isLandscape
-    ? (ch - 72 - 12 - GAP * (ROWS + 1)) / ROWS // 12 = paddingTop on row, 72 = display reserve
+    ? (ch - LANDSCAPE_DISPLAY_RESERVE - LANDSCAPE_ROW_PADDING_TOP - GAP * (ROWS + 1)) / ROWS
     : (portraitSciSharedHeight ?? buttonSize);
 
   // Landscape: scientific panel on the left at 45% width
@@ -148,11 +154,13 @@ export default function MainScreen() {
       ? (cw * sciPanelRatio - GAP * (SCI_COLS_LANDSCAPE + 1)) / SCI_COLS_LANDSCAPE
       : 0;
 
-  // Portrait: 6-col panel, paddingHorizontal=12 each side, row gap = buttonSize*0.12
-  // Solve: 6*bs + 5*(bs*0.12) + 24 = cw → bs = (cw-24)/6.6
+  // Portrait: 6-col panel, paddingHorizontal=12 each side, row gap = buttonSize*SCI_ROW_GAP_RATIO
+  // Solve: 6*bs + 5*(bs*SCI_ROW_GAP_RATIO) + 24 = cw → bs = (cw-24)/(6+5*SCI_ROW_GAP_RATIO)
+  const SCI_PORTRAIT_PANEL_PADDING = 24;
   const sciPortraitButtonSize =
     !isLandscape && showScientific
-      ? (cw - 24) / (SCI_COLS_PORTRAIT + (SCI_COLS_PORTRAIT - 1) * 0.12)
+      ? (cw - SCI_PORTRAIT_PANEL_PADDING) /
+        (SCI_COLS_PORTRAIT + (SCI_COLS_PORTRAIT - 1) * SCI_ROW_GAP_RATIO)
       : 0;
   const sciPortraitButtonHeight = portraitSciSharedHeight ?? 0;
 
@@ -170,7 +178,10 @@ export default function MainScreen() {
   const swipe = Gesture.Pan()
     .runOnJS(true)
     .onEnd((evt) => {
-      if (Math.abs(evt.translationX) > SWIPE_THRESHOLD_X && Math.abs(evt.translationY) < SWIPE_THRESHOLD_Y) {
+      if (
+        Math.abs(evt.translationX) > SWIPE_THRESHOLD_X &&
+        Math.abs(evt.translationY) < SWIPE_THRESHOLD_Y
+      ) {
         dispatch({ type: ACTIONS.DELETE_DIGIT });
       }
     });

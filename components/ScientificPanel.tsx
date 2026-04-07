@@ -33,6 +33,7 @@ const PRESSED_OPACITY = 0.6;
 const SCI_FONT_SIZE_MULTIPLIER = 0.28;
 const LANDSCAPE_GAP = 12;
 const PORTRAIT_GAP = 6;
+const ROW_GAP_RATIO = 0.12;
 
 // Landscape: 4 cols × 5 rows
 const ROWS_LANDSCAPE: ButtonDef[][] = [
@@ -310,7 +311,7 @@ export default memo(function ScientificPanel({
       ]}
     >
       {rows.map((row, ri) => (
-        <View key={ri} style={[styles.row, { gap: buttonSize * 0.12 }]}>
+        <View key={ri} style={[styles.row, { gap: buttonSize * ROW_GAP_RATIO }]}>
           {row.map((btn) => {
             const isAngleBtn = btn.angleLabel;
             const label = isAngleBtn ? angleMode.toUpperCase() : second ? btn.sl : btn.pl;
