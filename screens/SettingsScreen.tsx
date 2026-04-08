@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -8,7 +8,6 @@ import {
   Share,
   StyleSheet,
   Switch,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -28,13 +27,11 @@ import {
   Vibrate,
 } from 'lucide-react-native';
 import { useSettings, Settings } from '../store/SettingsContext';
-import {
-  clearHistory,
-  getHistory,
-  HistoryItem as HistoryItemData,
-} from '../services/historyService';
-import { formatNumber } from '../calculator/formatNumber';
+import { clearHistory, getHistory, HistoryItem as HistoryItemData } from '../services/historyService';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
+import HistoryItemRow from '../components/HistoryItemRow';
+import SectionCard from '../components/SectionCard';
+import SettingRow from '../components/SettingRow';
 
 const MIN_PRECISION = 0;
 const MAX_PRECISION = 10;
@@ -42,8 +39,6 @@ const PRECISION_STEP = 1;
 const COLOR_DOT_SIZE = 28;
 const SLIDER_WIDTH = 140;
 const SLIDER_HEIGHT = 36;
-const ROW_MIN_HEIGHT = 52;
-const CARD_BORDER_RADIUS = 12;
 const SEGMENT_BORDER_RADIUS = 8;
 
 const ACCENT_COLORS = [
@@ -63,89 +58,6 @@ const THEME_OPTIONS: Array<{ label: string; value: Settings['theme'] }> = [
   { label: 'System', value: 'system' },
 ];
 
-interface HistoryItemProps {
-  item: HistoryItemData;
-  onPress: (result: string) => void;
-  precision: number;
-}
-
-const HistoryItemRow = memo(function HistoryItemRow({
-  item,
-  onPress,
-  precision,
-}: HistoryItemProps) {
-  const { colors } = useTheme();
-  const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : '';
-
-  return (
-    <TouchableOpacity
-      style={[styles.historyItem, { backgroundColor: colors.historyBg }]}
-      onPress={() => onPress(item.result)}
-      activeOpacity={0.6}
-    >
-      {item.equation ? (
-        <ThemedText variant="equation" style={{ color: colors.historySubText }} numberOfLines={1}>
-          {item.equation}
-        </ThemedText>
-      ) : null}
-      <ThemedText variant="historyResult" style={{ color: colors.historyText }}>
-        {formatNumber(item.result, precision)}
-      </ThemedText>
-      <ThemedText variant="date" style={{ color: colors.historySubText }}>
-        {dateStr}
-      </ThemedText>
-    </TouchableOpacity>
-  );
-});
-
-interface SectionCardProps {
-  children: React.ReactNode;
-}
-
-const SectionCard = memo(function SectionCard({ children }: SectionCardProps) {
-  const { colors } = useTheme();
-  return <View style={[styles.card, { backgroundColor: colors.historyBg }]}>{children}</View>;
-});
-
-interface SettingRowProps {
-  icon?: React.ReactNode;
-  label: string;
-  children?: React.ReactNode;
-  last?: boolean | undefined;
-  onPress?: (() => void) | undefined;
-}
-
-const SettingRow = memo(function SettingRow({
-  icon,
-  label,
-  children,
-  last = false,
-  onPress,
-}: SettingRowProps) {
-  const { colors } = useTheme();
-  const Container = onPress ? TouchableOpacity : View;
-  return (
-    <Container
-      onPress={onPress}
-      activeOpacity={0.6}
-      style={[
-        styles.row,
-        !last && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.separator,
-        },
-      ]}
-    >
-      <View style={styles.rowLeft}>
-        {icon}
-        <ThemedText variant="rowLabel" style={{ color: colors.historyText }}>
-          {label}
-        </ThemedText>
-      </View>
-      <View style={styles.rowRight}>{children}</View>
-    </Container>
-  );
-});
 
 export default function SettingsScreen() {
   const [history, setHistory] = useState<HistoryItemData[]>([]);
@@ -410,29 +322,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    marginTop: 24,
-    marginBottom: 6,
-    marginHorizontal: 20,
-  },
-  card: {
-    marginHorizontal: 16,
-    borderRadius: CARD_BORDER_RADIUS,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: ROW_MIN_HEIGHT,
-  },
   rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rowRight: { alignItems: 'flex-end' },
   segmented: {
     flexDirection: 'row',
     borderRadius: SEGMENT_BORDER_RADIUS,
