@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import './i18n';
 import { useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
