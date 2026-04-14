@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Alert, FlatList, Share, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSettings } from '../store/SettingsContext';
@@ -15,6 +16,7 @@ export default function SettingsScreen() {
   const [history, setHistory] = useState<HistoryItemData[]>([]);
   const { settings, updateSetting } = useSettings();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -31,15 +33,15 @@ export default function SettingsScreen() {
   );
 
   const handleClearAll = useCallback(() => {
-    Alert.alert('Clear History', 'Are you sure you want to delete all history?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('history.clearConfirmTitle'), t('history.clearConfirmMessage'), [
+      { text: t('history.clearConfirmCancel'), style: 'cancel' },
       {
-        text: 'Delete All',
+        text: t('history.clearConfirmDelete'),
         style: 'destructive',
         onPress: () => clearHistory().then(() => setHistory([])),
       },
     ]);
-  }, []);
+  }, [t]);
 
   const handleItemPress = useCallback(
     (result: string) => {
@@ -57,8 +59,8 @@ export default function SettingsScreen() {
         return `${item.result}  —  ${dateStr}`;
       })
       .join('\n');
-    Share.share({ message: `My Calculator History:\n\n${text}` });
-  }, [history]);
+    Share.share({ message: `${t('history.shareHeader')}\n\n${text}` });
+  }, [history, t]);
 
   const listHeader = (
     <View>
@@ -100,7 +102,7 @@ export default function SettingsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <ThemedText variant="emptyText" style={{ color: colors.historySubText }}>
-              No calculations yet
+              {t('history.empty')}
             </ThemedText>
           </View>
         }

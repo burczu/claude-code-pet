@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler';
 import { formatNumber } from '../calculator/formatNumber';
 import { PORTRAIT_SCI_DISPLAY_HEIGHT } from '../calculator/useCalcLayout';
@@ -28,6 +29,7 @@ const CalcDisplay = memo(function CalcDisplay({
   swipe,
 }: CalcDisplayProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <GestureDetector gesture={swipe}>
@@ -44,7 +46,7 @@ const CalcDisplay = memo(function CalcDisplay({
               variant={isLandscape ? 'indicatorLandscape' : 'indicator'}
               style={{ color: colors.expressionText }}
             >
-              M
+              {t('display.memory')}
             </ThemedText>
           )}
           {showScientific && angleMode === 'rad' && (
@@ -52,7 +54,7 @@ const CalcDisplay = memo(function CalcDisplay({
               variant={isLandscape ? 'indicatorLandscape' : 'indicator'}
               style={{ color: colors.expressionText }}
             >
-              RAD
+              {t('display.radians')}
             </ThemedText>
           )}
         </View>

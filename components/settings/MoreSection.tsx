@@ -1,4 +1,5 @@
 import { Alert, Linking } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight, Info, Share2, Star } from 'lucide-react-native';
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 import SectionCard from '../SectionCard';
@@ -12,6 +13,7 @@ interface MoreSectionProps {
 
 export default function MoreSection({ accentColor, hasHistory, onShareHistory }: MoreSectionProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -24,7 +26,7 @@ export default function MoreSection({ accentColor, hasHistory, onShareHistory }:
           marginHorizontal: 20,
         }}
       >
-        MORE
+        {t('settings.more')}
       </ThemedText>
       <SectionCard>
         <SettingRow
@@ -34,7 +36,7 @@ export default function MoreSection({ accentColor, hasHistory, onShareHistory }:
               color={hasHistory ? accentColor : colors.separator}
             />
           }
-          label="Share History"
+          label={t('settings.shareHistory')}
           onPress={hasHistory ? onShareHistory : undefined}
         >
           <ChevronRight
@@ -45,7 +47,7 @@ export default function MoreSection({ accentColor, hasHistory, onShareHistory }:
 
         <SettingRow
           icon={<Star size={18} color={accentColor} />}
-          label="Rate App"
+          label={t('settings.rateApp')}
           onPress={() => Linking.openURL('https://apps.apple.com')}
         >
           <ChevronRight size={18} color={colors.historySubText} />
@@ -53,11 +55,9 @@ export default function MoreSection({ accentColor, hasHistory, onShareHistory }:
 
         <SettingRow
           icon={<Info size={18} color={accentColor} />}
-          label="About"
+          label={t('settings.about')}
           last
-          onPress={() =>
-            Alert.alert('Calculator', 'Version 1.0.0\nBuilt with Expo & React Native')
-          }
+          onPress={() => Alert.alert(t('about.title'), t('about.message'))}
         >
           <ChevronRight size={18} color={colors.historySubText} />
         </SettingRow>

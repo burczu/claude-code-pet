@@ -1,4 +1,5 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react-native';
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 
@@ -10,6 +11,7 @@ interface HistoryHeaderProps {
 
 export default function HistoryHeader({ accentColor, hasHistory, onClearAll }: HistoryHeaderProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.historyHeader}>
@@ -19,12 +21,12 @@ export default function HistoryHeader({ accentColor, hasHistory, onClearAll }: H
           variant="sectionTitle"
           style={{ color: colors.historySubText, marginTop: 0, marginLeft: 8 }}
         >
-          HISTORY
+          {t('history.title')}
         </ThemedText>
       </View>
       {hasHistory && (
         <TouchableOpacity onPress={onClearAll}>
-          <ThemedText variant="clearBtn">Clear All</ThemedText>
+          <ThemedText variant="clearBtn">{t('history.clearAll')}</ThemedText>
         </TouchableOpacity>
       )}
     </View>

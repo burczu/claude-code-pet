@@ -1,4 +1,5 @@
 import { StyleSheet, Switch } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Slider from '@react-native-community/slider';
 import { FlaskConical, Hash, Vibrate } from 'lucide-react-native';
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
@@ -31,6 +32,7 @@ export default function BehaviourSection({
   onPrecisionChange,
 }: BehaviourSectionProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -43,10 +45,10 @@ export default function BehaviourSection({
           marginHorizontal: 20,
         }}
       >
-        BEHAVIOUR
+        {t('settings.behaviour')}
       </ThemedText>
       <SectionCard>
-        <SettingRow icon={<Vibrate size={18} color={accentColor} />} label="Haptics">
+        <SettingRow icon={<Vibrate size={18} color={accentColor} />} label={t('settings.haptics')}>
           <Switch
             value={hapticsEnabled}
             onValueChange={onHapticsChange}
@@ -56,7 +58,7 @@ export default function BehaviourSection({
 
         <SettingRow
           icon={<FlaskConical size={18} color={accentColor} />}
-          label="Scientific Mode"
+          label={t('settings.scientificMode')}
         >
           <Switch
             value={scientificMode}
@@ -67,7 +69,7 @@ export default function BehaviourSection({
 
         <SettingRow
           icon={<Hash size={18} color={accentColor} />}
-          label={`Precision: ${precision}`}
+          label={t('settings.precision', { value: precision })}
           last
         >
           <Slider

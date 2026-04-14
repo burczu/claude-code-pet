@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Palette, Sun } from 'lucide-react-native';
 import { Settings } from '../../store/SettingsContext';
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
@@ -19,11 +20,7 @@ const ACCENT_COLORS = [
   '#ff6b00',
 ];
 
-const THEME_OPTIONS: Array<{ label: string; value: Settings['theme'] }> = [
-  { label: 'Light', value: 'light' },
-  { label: 'Dark', value: 'dark' },
-  { label: 'System', value: 'system' },
-];
+const THEME_VALUES: Array<Settings['theme']> = ['light', 'dark', 'system'];
 
 interface AppearanceSectionProps {
   theme: Settings['theme'];
@@ -39,6 +36,7 @@ export default function AppearanceSection({
   onAccentChange,
 }: AppearanceSectionProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <>
@@ -46,32 +44,32 @@ export default function AppearanceSection({
         variant="sectionTitle"
         style={{ color: colors.historySubText, marginTop: 4, marginBottom: 6, marginHorizontal: 20 }}
       >
-        APPEARANCE
+        {t('settings.appearance')}
       </ThemedText>
       <SectionCard>
-        <SettingRow icon={<Sun size={18} color={accentColor} />} label="Theme">
+        <SettingRow icon={<Sun size={18} color={accentColor} />} label={t('settings.theme')}>
           <View style={styles.segmented}>
-            {THEME_OPTIONS.map((opt) => (
+            {THEME_VALUES.map((value) => (
               <Pressable
-                key={opt.value}
-                onPress={() => onThemeChange(opt.value)}
+                key={value}
+                onPress={() => onThemeChange(value)}
                 style={[
                   styles.segment,
-                  theme === opt.value && { backgroundColor: accentColor },
+                  theme === value && { backgroundColor: accentColor },
                 ]}
               >
                 <ThemedText
                   variant="segmentText"
-                  style={{ color: theme === opt.value ? '#fff' : colors.historyText }}
+                  style={{ color: theme === value ? '#fff' : colors.historyText }}
                 >
-                  {opt.label}
+                  {t(`settings.themeOptions.${value}`)}
                 </ThemedText>
               </Pressable>
             ))}
           </View>
         </SettingRow>
 
-        <SettingRow icon={<Palette size={18} color={accentColor} />} label="Accent" last>
+        <SettingRow icon={<Palette size={18} color={accentColor} />} label={t('settings.accent')} last>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
