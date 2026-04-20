@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
-import Config from 'react-native-config';
+import { OPENAI_API_KEY } from '@env';
 
 const WHISPER_URL = 'https://api.openai.com/v1/audio/transcriptions';
 
@@ -42,7 +42,7 @@ export async function stopRecordingAndTranscribe(): Promise<string> {
 
   const response = await fetch(WHISPER_URL, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${Config.OPENAI_API_KEY ?? ''}` },
+    headers: { Authorization: `Bearer ${OPENAI_API_KEY ?? ''}` },
     body: formData,
   });
 

@@ -75,7 +75,7 @@ Built on **OpenAI Chat Completions** with `tool_choice: 'required'` — the mode
 
 **Contextual memory**: a rolling `messages[]` array (last 10 turns) is passed with every request, enabling follow-up queries like *"Now take 20% off that"*.
 
-**API key**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The key is read via `react-native-config`.
+**API key**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The key is injected at build time via `react-native-dotenv` (Babel plugin) — no native linking required, works with Expo Go.
 
 **Voice input**: `ChatInput` manages three states — `idle` → `recording` → `transcribing`. Tap mic to start, tap again to stop and auto-send the Whisper transcript. TTS fires automatically when a result arrives.
 
