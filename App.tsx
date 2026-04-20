@@ -5,10 +5,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ThemeProvider } from '@shopify/restyle';
-import { Home, Settings } from 'lucide-react-native';
+import { Bot, Home, Settings } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { SettingsProvider, useSettings } from './store/SettingsContext';
 import MainScreen from './screens/MainScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import AssistantScreen from './screens/AssistantScreen';
 import { darkTheme, lightTheme } from './theme/restyleTheme';
 
 const Tab = createBottomTabNavigator();
@@ -20,6 +22,7 @@ const LANDSCAPE_TAB_PADDING_TOP = 3;
 function AppNavigator() {
   const { width, height } = useWindowDimensions();
   const { resolvedScheme, settings } = useSettings();
+  const { t } = useTranslation();
   const isLandscape = width > height;
   const restyleTheme = useMemo(() => {
     const base = resolvedScheme === 'dark' ? darkTheme : lightTheme;
@@ -52,6 +55,14 @@ function AppNavigator() {
             component={MainScreen}
             options={{
               tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+            }}
+          />
+          <Tab.Screen
+            name="Assistant"
+            component={AssistantScreen}
+            options={{
+              tabBarLabel: t('assistant.tabLabel'),
+              tabBarIcon: ({ color, size }) => <Bot color={color} size={size} />,
             }}
           />
           <Tab.Screen

@@ -35,6 +35,15 @@ export interface TranslationKeys {
     memory: string;
     radians: string;
   };
+  assistant: {
+    emptyState: string;
+    inputPlaceholder: string;
+    outOfScope: string;
+    useResult: string;
+    showSteps: string;
+    hideSteps: string;
+    tabLabel: string;
+  };
 }
 
 const en: TranslationKeys = {
@@ -73,6 +82,15 @@ const en: TranslationKeys = {
   display: {
     memory: 'M',
     radians: 'RAD',
+  },
+  assistant: {
+    emptyState: 'Ask me anything math-related',
+    inputPlaceholder: 'e.g. Split $80 between 3 people with 15% tip',
+    outOfScope: "I can only help with calculations and math. Try asking something like \"What's 15% of 200?\"",
+    useResult: 'Use result',
+    showSteps: 'Show working',
+    hideSteps: 'Hide working',
+    tabLabel: 'Assistant',
   },
 };
 

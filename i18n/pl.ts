@@ -37,6 +37,15 @@ const pl: TranslationKeys = {
     memory: 'M',
     radians: 'RAD',
   },
+  assistant: {
+    emptyState: 'Zadaj mi pytanie związane z matematyką',
+    inputPlaceholder: 'np. Podziel 80 zł na 3 osoby z napiwkiem 15%',
+    outOfScope: 'Mogę pomagać tylko z obliczeniami. Spróbuj np. „Ile to 15% z 200?"',
+    useResult: 'Użyj wyniku',
+    showSteps: 'Pokaż kroki',
+    hideSteps: 'Ukryj kroki',
+    tabLabel: 'Asystent',
+  },
 };
 
 export default pl;
