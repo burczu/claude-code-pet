@@ -28,8 +28,8 @@ npx jest --watch   # Run tests in watch mode
 - **`store/SettingsContext.tsx`** — React Context persisted to AsyncStorage. Settings: `theme` (light/dark/system), `accentColor`, `hapticsEnabled`, `precision`, `scientificMode`. Holds splash screen until loaded.
 - **`theme/restyleTheme.ts`** — `@shopify/restyle` theme. Exports `darkTheme`, `lightTheme`, `AppTheme`, `Box`, `ThemedText`, `useTheme`. `accentColor` is merged into `operatorBtn` at runtime in `App.tsx`.
 - **`services/historyService.ts`** — AsyncStorage-backed history (max 50 items, key `@calc_history`).
-- **`services/openaiClient.ts`** — configured `OpenAI` instance; reads `OPENAI_API_KEY` from `.env` via `react-native-config`.
-- **`services/assistantService.ts`** — chat assistant built on OpenAI function calling. Exposes `sendMessage(text, history)` → `AssistantResultType`. See *Conversational Assistant* section below.
+- **`services/geminiClient.ts`** — configured `GoogleGenerativeAI` instance; reads `GEMINI_API_KEY` from `.env` via `react-native-dotenv`.
+- **`services/assistantService.ts`** — chat assistant built on Gemini function calling. Exposes `sendMessage(text, history)` → `AssistantResultType`. See *Conversational Assistant* section below.
 - **`services/speechService.ts`** — microphone recording via `expo-av`, Whisper transcription via REST, TTS via `expo-speech`.
 - **`screens/MainScreen.tsx`** — calculator UI. Uses `useCalcLayout`, `useHistoryPush`, `useSwipeToDelete`, and `CalcDisplay`.
 - **`screens/AssistantScreen.tsx`** — chat UI. `FlatList` of `MessageBubble` items; rolling 10-turn history passed to `assistantService`; results pushed to `historyService` and spoken via TTS.
@@ -63,7 +63,7 @@ npx jest --watch   # Run tests in watch mode
 
 ### Conversational Assistant
 
-Built on **OpenAI Chat Completions** with `tool_choice: 'required'` — the model always calls a function, never returns free text.
+Built on **Google Gemini** (`gemini-1.5-flash`) with `toolConfig: { functionCallingConfig: { mode: 'ANY' } }` — the model always calls a function, never returns free text.
 
 **Function schemas** (defined in `assistantService.ts`):
 - `evaluate_expression` — general arithmetic; delegates to `evaluateTokens()` from `mathEngine.ts`
@@ -73,11 +73,11 @@ Built on **OpenAI Chat Completions** with `tool_choice: 'required'` — the mode
 
 **`out_of_scope` pattern**: the system prompt restricts the model to math-only queries. For anything unrelated, the model calls `out_of_scope` — the service returns `{ type: 'out_of_scope' }` and `MessageBubble` renders it with a distinct style. Never parse free-text fallbacks.
 
-**Contextual memory**: a rolling `messages[]` array (last 10 turns) is passed with every request, enabling follow-up queries like *"Now take 20% off that"*.
+**Contextual memory**: a rolling `Content[]` history (last 10 turns) is passed with every request, enabling follow-up queries like *"Now take 20% off that"*. Assistant turns use `role: 'model'` (Gemini convention).
 
-**API key**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The key is injected at build time via `react-native-dotenv` (Babel plugin) — no native linking required, works with Expo Go.
+**API keys**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `GEMINI_API_KEY` (chat) and `GROQ_API_KEY` (Whisper STT). Keys are injected at build time via `react-native-dotenv` (Babel plugin) — no native linking required, works with Expo Go.
 
-**Voice input**: `ChatInput` manages three states — `idle` → `recording` → `transcribing`. Tap mic to start, tap again to stop and auto-send the Whisper transcript. TTS fires automatically when a result arrives.
+**Voice input**: `ChatInput` manages three states — `idle` → `recording` → `transcribing`. Tap mic to start, tap again to stop and auto-send the transcript (via Groq Whisper at `https://api.groq.com/openai/v1/audio/transcriptions`). TTS fires automatically when a result arrives.
 
 ### Testing
 

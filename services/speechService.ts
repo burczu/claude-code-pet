@@ -1,8 +1,8 @@
 import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
-import { OPENAI_API_KEY } from '@env';
+import { GROQ_API_KEY } from '@env';
 
-const WHISPER_URL = 'https://api.openai.com/v1/audio/transcriptions';
+const WHISPER_URL = 'https://api.groq.com/openai/v1/audio/transcriptions';
 
 let activeRecording: Audio.Recording | null = null;
 
@@ -42,7 +42,7 @@ export async function stopRecordingAndTranscribe(): Promise<string> {
 
   const response = await fetch(WHISPER_URL, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY ?? ''}` },
+    headers: { Authorization: `Bearer ${GROQ_API_KEY ?? ''}` },
     body: formData,
   });
 

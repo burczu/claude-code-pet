@@ -1,3 +1,4 @@
 declare module '@env' {
-  export const OPENAI_API_KEY: string | undefined;
+  export const GEMINI_API_KEY: string | undefined;
+  export const GROQ_API_KEY: string | undefined;
 }
