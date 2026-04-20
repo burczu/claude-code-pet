@@ -14,7 +14,7 @@ npx jest --watch   # Run tests in watch mode
 
 ## Architecture
 
-**Expo SDK 54 / React Native 0.81.5 / React 19**, new architecture enabled (`newArchEnabled: true`). Two-screen bottom tab navigator (Home + Settings). Targets iOS, Android, web.
+**Expo SDK 54 / React Native 0.81.5 / React 19**, new architecture enabled (`newArchEnabled: true`). Three-screen bottom tab navigator (Home + Assistant + Settings). Targets iOS, Android, web.
 
 ### Key files
 
@@ -28,7 +28,12 @@ npx jest --watch   # Run tests in watch mode
 - **`store/SettingsContext.tsx`** — React Context persisted to AsyncStorage. Settings: `theme` (light/dark/system), `accentColor`, `hapticsEnabled`, `precision`, `scientificMode`. Holds splash screen until loaded.
 - **`theme/restyleTheme.ts`** — `@shopify/restyle` theme. Exports `darkTheme`, `lightTheme`, `AppTheme`, `Box`, `ThemedText`, `useTheme`. `accentColor` is merged into `operatorBtn` at runtime in `App.tsx`.
 - **`services/historyService.ts`** — AsyncStorage-backed history (max 50 items, key `@calc_history`).
+- **`services/openaiClient.ts`** — configured `OpenAI` instance; reads `OPENAI_API_KEY` from `.env` via `react-native-config`.
+- **`services/assistantService.ts`** — chat assistant built on OpenAI function calling. Exposes `sendMessage(text, history)` → `AssistantResultType`. See *Conversational Assistant* section below.
+- **`services/speechService.ts`** — microphone recording via `expo-av`, Whisper transcription via REST, TTS via `expo-speech`.
 - **`screens/MainScreen.tsx`** — calculator UI. Uses `useCalcLayout`, `useHistoryPush`, `useSwipeToDelete`, and `CalcDisplay`.
+- **`screens/AssistantScreen.tsx`** — chat UI. `FlatList` of `MessageBubble` items; rolling 10-turn history passed to `assistantService`; results pushed to `historyService` and spoken via TTS.
+- **`components/assistant/`** — `MessageBubble`, `StepsAccordion`, `ChatInput`.
 - **`screens/SettingsScreen.tsx`** — settings + history. `FlatList` with a header composed of `AppearanceSection`, `BehaviourSection`, `MoreSection`, `HistoryHeader`.
 - **`components/CalcButton.tsx`** — memoised button. Accepts separate `buttonSize` (width) and `buttonHeight` props.
 - **`components/CalcDisplay.tsx`** — display area: indicators (M, RAD), expression, current value, swipe gesture.
@@ -54,7 +59,25 @@ npx jest --watch   # Run tests in watch mode
 - **`i18n/pl.ts`** — Polish translations.
 - Supported locales: `en`, `pl`. Device locale is detected automatically; falls back to `en`.
 - To add a new language: create `i18n/<code>.ts` implementing `TranslationKeys`, then register it in `i18n/index.ts`.
-- All user-facing strings use `const { t } = useTranslation()`. Keys are namespaced: `settings.*`, `history.*`, `about.*`, `display.*`.
+- All user-facing strings use `const { t } = useTranslation()`. Keys are namespaced: `settings.*`, `history.*`, `about.*`, `display.*`, `assistant.*`.
+
+### Conversational Assistant
+
+Built on **OpenAI Chat Completions** with `tool_choice: 'required'` — the model always calls a function, never returns free text.
+
+**Function schemas** (defined in `assistantService.ts`):
+- `evaluate_expression` — general arithmetic; delegates to `evaluateTokens()` from `mathEngine.ts`
+- `split_and_tip` — bill splitting with optional tip percentage
+- `unit_conversion` — length, weight, temperature conversions
+- `out_of_scope` — called when the prompt is unrelated to math; the UI renders a canned decline message instead of a result
+
+**`out_of_scope` pattern**: the system prompt restricts the model to math-only queries. For anything unrelated, the model calls `out_of_scope` — the service returns `{ type: 'out_of_scope' }` and `MessageBubble` renders it with a distinct style. Never parse free-text fallbacks.
+
+**Contextual memory**: a rolling `messages[]` array (last 10 turns) is passed with every request, enabling follow-up queries like *"Now take 20% off that"*.
+
+**API key**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `OPENAI_API_KEY`. The key is read via `react-native-config`.
+
+**Voice input**: `ChatInput` manages three states — `idle` → `recording` → `transcribing`. Tap mic to start, tap again to stop and auto-send the Whisper transcript. TTS fires automatically when a result arrives.
 
 ### Testing
 
