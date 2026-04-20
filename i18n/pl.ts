@@ -45,6 +45,7 @@ const pl: TranslationKeys = {
     showSteps: 'Pokaż kroki',
     hideSteps: 'Ukryj kroki',
     tabLabel: 'Asystent',
+    micPermissionDenied: 'Uprawnienie do mikrofonu jest wymagane do wprowadzania głosowego.',
   },
 };
 

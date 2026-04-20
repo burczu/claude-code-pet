@@ -43,6 +43,7 @@ export interface TranslationKeys {
     showSteps: string;
     hideSteps: string;
     tabLabel: string;
+    micPermissionDenied: string;
   };
 }
 
@@ -91,6 +92,7 @@ const en: TranslationKeys = {
     showSteps: 'Show working',
     hideSteps: 'Hide working',
     tabLabel: 'Assistant',
+    micPermissionDenied: 'Microphone permission is required for voice input.',
   },
 };
 
