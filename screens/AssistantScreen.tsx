@@ -5,6 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { sendMessage, AssistantMessage } from '../services/assistantService';
 import { pushHistory } from '../services/historyService';
+import { formatNumber } from '../calculator/formatNumber';
+import { useSettings } from '../store/SettingsContext';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 import MessageBubble from '../components/assistant/MessageBubble';
 import ChatInput from '../components/assistant/ChatInput';
@@ -26,6 +28,7 @@ export default function AssistantScreen() {
   const listRef = useRef<FlatList<DisplayMessage>>(null);
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { settings } = useSettings();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -43,14 +46,15 @@ export default function AssistantScreen() {
     let assistantMsg: DisplayMessage;
 
     if (result.type === 'result') {
+      const displayValue = formatNumber(result.value, settings.precision);
       assistantMsg = {
         id: `${Date.now()}-assistant`,
         role: 'assistant',
-        content: result.value,
+        content: displayValue,
         steps: result.steps,
       };
-      void pushHistory(text, result.value);
-      // Update rolling history for contextual memory
+      void pushHistory(text, displayValue);
+      // Update rolling history for contextual memory — use raw value for AI context
       historyRef.current = [
         ...historyRef.current,
         { role: 'user' as const, content: text },
@@ -73,11 +77,13 @@ export default function AssistantScreen() {
     setMessages((prev) => [...prev, assistantMsg]);
     setLoading(false);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [t]);
+  }, [t, settings.precision]);
 
   const handleUseResult = useCallback((value: string) => {
+    // Strip thousands separators before passing to calculator
+    const raw = value.replace(/,/g, '');
     // @ts-expect-error — untyped navigator params
-    navigation.navigate('Home', { initialValue: value });
+    navigation.navigate('Home', { initialValue: raw });
   }, [navigation]);
 
   return (
