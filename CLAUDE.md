@@ -28,8 +28,8 @@ npx jest --watch   # Run tests in watch mode
 - **`store/SettingsContext.tsx`** — React Context persisted to AsyncStorage. Settings: `theme` (light/dark/system), `accentColor`, `hapticsEnabled`, `precision`, `scientificMode`. Holds splash screen until loaded.
 - **`theme/restyleTheme.ts`** — `@shopify/restyle` theme. Exports `darkTheme`, `lightTheme`, `AppTheme`, `Box`, `ThemedText`, `useTheme`. `accentColor` is merged into `operatorBtn` at runtime in `App.tsx`.
 - **`services/historyService.ts`** — AsyncStorage-backed history (max 50 items, key `@calc_history`).
-- **`services/geminiClient.ts`** — configured `GoogleGenerativeAI` instance; reads `GEMINI_API_KEY` from `.env` via `react-native-dotenv`.
-- **`services/assistantService.ts`** — chat assistant built on Gemini function calling. Exposes `sendMessage(text, history)` → `AssistantResultType`. See *Conversational Assistant* section below.
+- **`services/groqClient.ts`** — configured `Groq` instance; reads `GROQ_API_KEY` from `.env` via `react-native-dotenv`.
+- **`services/assistantService.ts`** — chat assistant built on Groq function calling. Exposes `sendMessage(text, history)` → `AssistantResultType`. See *Conversational Assistant* section below.
 - **`services/speechService.ts`** — microphone recording via `expo-av`, Whisper transcription via REST, TTS via `expo-speech`.
 - **`screens/MainScreen.tsx`** — calculator UI. Uses `useCalcLayout`, `useHistoryPush`, `useSwipeToDelete`, and `CalcDisplay`.
 - **`screens/AssistantScreen.tsx`** — chat UI. `FlatList` of `MessageBubble` items; rolling 10-turn history passed to `assistantService`; results pushed to `historyService` and spoken via TTS.
@@ -63,7 +63,7 @@ npx jest --watch   # Run tests in watch mode
 
 ### Conversational Assistant
 
-Built on **Google Gemini** (`gemini-1.5-flash`) with `toolConfig: { functionCallingConfig: { mode: 'ANY' } }` — the model always calls a function, never returns free text.
+Built on **Groq** (`openai/gpt-oss-120b`) with `tool_choice: 'required'` — the model always calls a function, never returns free text.
 
 **Function schemas** (defined in `assistantService.ts`):
 - `evaluate_expression` — general arithmetic; delegates to `evaluateTokens()` from `mathEngine.ts`
@@ -73,11 +73,11 @@ Built on **Google Gemini** (`gemini-1.5-flash`) with `toolConfig: { functionCall
 
 **`out_of_scope` pattern**: the system prompt restricts the model to math-only queries. For anything unrelated, the model calls `out_of_scope` — the service returns `{ type: 'out_of_scope' }` and `MessageBubble` renders it with a distinct style. Never parse free-text fallbacks.
 
-**Contextual memory**: a rolling `Content[]` history (last 10 turns) is passed with every request, enabling follow-up queries like *"Now take 20% off that"*. Assistant turns use `role: 'model'` (Gemini convention).
+**Contextual memory**: a rolling `messages[]` array (last 10 turns) is passed with every request, enabling follow-up queries like *"Now take 20% off that"*. Raw (unformatted) values are stored in history for reliable AI context.
 
-**API keys**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `GEMINI_API_KEY` (chat) and `GROQ_API_KEY` (Whisper STT). Keys are injected at build time via `react-native-dotenv` (Babel plugin) — no native linking required, works with Expo Go.
+**API key**: stored in `.env` (gitignored). Copy `.env.example` to `.env` and set `GROQ_API_KEY` — used for both the chat assistant and Whisper STT. Injected at build time via `react-native-dotenv` (Babel plugin) — no native linking required, works with Expo Go.
 
-**Voice input**: `ChatInput` manages three states — `idle` → `recording` → `transcribing`. Tap mic to start, tap again to stop and auto-send the transcript (via Groq Whisper at `https://api.groq.com/openai/v1/audio/transcriptions`). TTS fires automatically when a result arrives.
+**Voice input**: `ChatInput` manages three states — `idle` → `recording` → `transcribing`. Tap mic to start, tap again to stop and auto-send the transcript (via Groq Whisper at `https://api.groq.com/openai/v1/audio/transcriptions`).
 
 ### Testing
 
