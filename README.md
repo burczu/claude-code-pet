@@ -22,9 +22,10 @@ A scientific calculator built with Expo / React Native, used as a learning proje
 
 ```bash
 npm install
-npm start          # Expo dev server (scan QR with Expo Go)
-npm run ios        # iOS simulator
-npm run android    # Android emulator
+cp .env.example .env   # then fill in GROQ_API_KEY
+npx expo start         # Expo dev server (scan QR with Expo Go)
+npx expo run:ios       # iOS simulator
+npx expo run:android   # Android emulator
 ```
 
 ## Running tests

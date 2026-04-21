@@ -8,7 +8,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -41,10 +42,27 @@
     "preset": "jest-expo",
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|big.js)"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 65,
+        "branches": 55,
+        "functions": 70,
+        "lines": 72
+      }
+    }
   },
   "type": "module",
   "private": true,
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/plugin-transform-modules-commonjs": "^7.28.6",
@@ -56,6 +74,8 @@
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "react-native-dotenv": "^3.4.11",
     "typescript": "^6.0.2"
