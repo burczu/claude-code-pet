@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { sendMessage, AssistantMessage } from '../services/assistantService';
 import { pushHistory } from '../services/historyService';
-import { speak } from '../services/speechService';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 import MessageBubble from '../components/assistant/MessageBubble';
 import ChatInput from '../components/assistant/ChatInput';
@@ -51,7 +50,6 @@ export default function AssistantScreen() {
         steps: result.steps,
       };
       void pushHistory(text, result.value);
-      speak(result.value);
       // Update rolling history for contextual memory
       historyRef.current = [
         ...historyRef.current,
