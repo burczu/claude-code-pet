@@ -1,7 +1,9 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
+
 import StepsAccordion from './StepsAccordion';
 
 export type BubbleRole = 'user' | 'assistant' | 'out_of_scope' | 'error';
@@ -35,10 +37,7 @@ const MessageBubble = memo(function MessageBubble({
   return (
     <View style={[styles.row, isUser ? styles.rowRight : styles.rowLeft]}>
       <View style={bubbleStyle}>
-        <ThemedText
-          variant="rowLabel"
-          style={{ color: isUser ? '#fff' : colors.historyText }}
-        >
+        <ThemedText variant="rowLabel" style={{ color: isUser ? '#fff' : colors.historyText }}>
           {content}
         </ThemedText>
 
@@ -46,7 +45,7 @@ const MessageBubble = memo(function MessageBubble({
 
         {role === 'assistant' && onUseResult && (
           <TouchableOpacity
-            style={[styles.useBtn, { borderColor: colors.separator }]}
+            style={[styles.resultBtn, { borderColor: colors.separator }]}
             onPress={() => onUseResult(content)}
             activeOpacity={0.7}
           >
@@ -69,7 +68,7 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: '80%', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, gap: 8 },
   userBubble: { borderBottomRightRadius: 4 },
   assistantBubble: { borderBottomLeftRadius: 4 },
-  useBtn: {
+  resultBtn: {
     alignSelf: 'flex-end',
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,

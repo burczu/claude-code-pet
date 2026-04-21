@@ -1,5 +1,6 @@
 import { memo, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+
 import { ACTIONS, CalculatorAction } from '../calculator/reducer';
 import { ScientificFn, Operator, AngleMode } from '../calculator/mathEngine';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
@@ -311,6 +312,7 @@ export default memo(function ScientificPanel({
       ]}
     >
       {rows.map((row, ri) => (
+        // eslint-disable-next-line react/no-array-index-key
         <View key={ri} style={[styles.row, { gap: buttonSize * ROW_GAP_RATIO }]}>
           {row.map((btn) => {
             const isAngleBtn = btn.angleLabel;

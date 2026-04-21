@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+
 import { sendMessage, AssistantMessage } from '../services/assistantService';
 import { pushHistory } from '../services/historyService';
 import { formatNumber } from '../calculator/formatNumber';
@@ -32,59 +33,65 @@ export default function AssistantScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  const handleSend = useCallback(async (text: string) => {
-    const userMsg: DisplayMessage = {
-      id: `${Date.now()}-user`,
-      role: 'user',
-      content: text,
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setLoading(true);
-
-    const result = await sendMessage(text, historyRef.current);
-
-    let assistantMsg: DisplayMessage;
-
-    if (result.type === 'result') {
-      const displayValue = formatNumber(result.value, settings.precision);
-      assistantMsg = {
-        id: `${Date.now()}-assistant`,
-        role: 'assistant',
-        content: displayValue,
-        steps: result.steps,
+  const handleSend = useCallback(
+    async (text: string) => {
+      const userMsg: DisplayMessage = {
+        id: `${Date.now()}-user`,
+        role: 'user',
+        content: text,
       };
-      void pushHistory(text, displayValue);
-      // Update rolling history for contextual memory — use raw value for AI context
-      historyRef.current = [
-        ...historyRef.current,
-        { role: 'user' as const, content: text },
-        { role: 'assistant' as const, content: result.value },
-      ].slice(-MAX_HISTORY);
-    } else if (result.type === 'out_of_scope') {
-      assistantMsg = {
-        id: `${Date.now()}-out_of_scope`,
-        role: 'out_of_scope',
-        content: t('assistant.outOfScope'),
-      };
-    } else {
-      assistantMsg = {
-        id: `${Date.now()}-error`,
-        role: 'error',
-        content: result.message,
-      };
-    }
+      setMessages((prev) => [...prev, userMsg]);
+      setLoading(true);
 
-    setMessages((prev) => [...prev, assistantMsg]);
-    setLoading(false);
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [t, settings.precision]);
+      const result = await sendMessage(text, historyRef.current);
 
-  const handleUseResult = useCallback((value: string) => {
-    // Strip thousands separators before passing to calculator
-    const raw = value.replace(/,/g, '');
-    // @ts-expect-error — untyped navigator params
-    navigation.navigate('Home', { initialValue: raw });
-  }, [navigation]);
+      let assistantMsg: DisplayMessage;
+
+      if (result.type === 'result') {
+        const displayValue = formatNumber(result.value, settings.precision);
+        assistantMsg = {
+          id: `${Date.now()}-assistant`,
+          role: 'assistant',
+          content: displayValue,
+          steps: result.steps,
+        };
+        void pushHistory(text, displayValue);
+        // Update rolling history for contextual memory — use raw value for AI context
+        historyRef.current = [
+          ...historyRef.current,
+          { role: 'user' as const, content: text },
+          { role: 'assistant' as const, content: result.value },
+        ].slice(-MAX_HISTORY);
+      } else if (result.type === 'out_of_scope') {
+        assistantMsg = {
+          id: `${Date.now()}-out_of_scope`,
+          role: 'out_of_scope',
+          content: t('assistant.outOfScope'),
+        };
+      } else {
+        assistantMsg = {
+          id: `${Date.now()}-error`,
+          role: 'error',
+          content: result.message,
+        };
+      }
+
+      setMessages((prev) => [...prev, assistantMsg]);
+      setLoading(false);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    },
+    [t, settings.precision],
+  );
+
+  const handleUseResult = useCallback(
+    (value: string) => {
+      // Strip thousands separators before passing to calculator
+      const raw = value.replace(/,/g, '');
+      // @ts-expect-error — untyped navigator params
+      navigation.navigate('Home', { initialValue: raw });
+    },
+    [navigation],
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>

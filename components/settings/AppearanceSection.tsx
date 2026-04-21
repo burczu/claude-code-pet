@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Palette, Sun } from 'lucide-react-native';
+
 import { Settings } from '../../store/SettingsContext';
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 import SectionCard from '../SectionCard';
@@ -20,7 +21,7 @@ const ACCENT_COLORS = [
   '#ff6b00',
 ];
 
-const THEME_VALUES: Array<Settings['theme']> = ['light', 'dark', 'system'];
+const THEME_VALUES: Settings['theme'][] = ['light', 'dark', 'system'];
 
 interface AppearanceSectionProps {
   theme: Settings['theme'];
@@ -42,7 +43,12 @@ export default function AppearanceSection({
     <>
       <ThemedText
         variant="sectionTitle"
-        style={{ color: colors.historySubText, marginTop: 4, marginBottom: 6, marginHorizontal: 20 }}
+        style={{
+          color: colors.historySubText,
+          marginTop: 4,
+          marginBottom: 6,
+          marginHorizontal: 20,
+        }}
       >
         {t('settings.appearance')}
       </ThemedText>
@@ -53,10 +59,7 @@ export default function AppearanceSection({
               <Pressable
                 key={value}
                 onPress={() => onThemeChange(value)}
-                style={[
-                  styles.segment,
-                  theme === value && { backgroundColor: accentColor },
-                ]}
+                style={[styles.segment, theme === value && { backgroundColor: accentColor }]}
               >
                 <ThemedText
                   variant="segmentText"
@@ -69,12 +72,12 @@ export default function AppearanceSection({
           </View>
         </SettingRow>
 
-        <SettingRow icon={<Palette size={18} color={accentColor} />} label={t('settings.accent')} last>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.colorScroll}
-          >
+        <SettingRow
+          icon={<Palette size={18} color={accentColor} />}
+          label={t('settings.accent')}
+          last
+        >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorScroll}>
             {ACCENT_COLORS.map((color) => (
               <Pressable
                 key={color}

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
+
 import { pushHistory } from '../services/historyService';
+
 import type { Token } from './mathEngine';
 
 const HISTORY_DEBOUNCE_MS = 500;

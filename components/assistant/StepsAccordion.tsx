@@ -1,6 +1,7 @@
 import { memo, useState } from 'react';
 import { LayoutAnimation, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 
 interface StepsAccordionProps {
@@ -28,7 +29,7 @@ const StepsAccordion = memo(function StepsAccordion({ steps }: StepsAccordionPro
         <View style={styles.steps}>
           {steps.map((step, i) => (
             <ThemedText
-              key={i}
+              key={step || i}
               variant="equation"
               style={{ color: colors.historySubText, marginTop: 4 }}
             >

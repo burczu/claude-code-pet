@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Mic, MicOff, SendHorizonal } from 'lucide-react-native';
+
 import { useTheme } from '../../theme/restyleTheme';
 import { startRecording, stopRecordingAndTranscribe } from '../../services/speechService';
 
@@ -52,7 +53,12 @@ const ChatInput = memo(function ChatInput({ onSend, loading }: ChatInputProps) {
   const micColor = recordingState === 'recording' ? colors.danger : colors.historySubText;
 
   return (
-    <View style={[styles.container, { borderTopColor: colors.separator, backgroundColor: colors.historyBg }]}>
+    <View
+      style={[
+        styles.container,
+        { borderTopColor: colors.separator, backgroundColor: colors.historyBg },
+      ]}
+    >
       <TouchableOpacity
         style={styles.micBtn}
         onPress={handleMicPress}

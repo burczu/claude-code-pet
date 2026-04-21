@@ -1,4 +1,5 @@
 import Big from 'big.js';
+
 import {
   evaluateTokens,
   applyScientific,
@@ -187,7 +188,7 @@ export function calculatorReducer(
 
     case ACTIONS.ADD_EE: {
       if (state.current === 'Error' || state.current.includes('e') || state.overwrite) return state;
-      return { ...state, current: state.current + 'e' };
+      return { ...state, current: `${state.current}e` };
     }
 
     case ACTIONS.PAREN_OPEN: {

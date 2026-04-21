@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
+
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 const PRESSED_OPACITY_IOS = 0.7;

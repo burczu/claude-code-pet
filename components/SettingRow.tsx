@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 
 const ROW_MIN_HEIGHT = 52;

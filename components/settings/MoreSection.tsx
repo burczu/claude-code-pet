@@ -1,6 +1,7 @@
 import { Alert, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Info, Share2, Star } from 'lucide-react-native';
+
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 import SectionCard from '../SectionCard';
 import SettingRow from '../SettingRow';
@@ -30,19 +31,11 @@ export default function MoreSection({ accentColor, hasHistory, onShareHistory }:
       </ThemedText>
       <SectionCard>
         <SettingRow
-          icon={
-            <Share2
-              size={18}
-              color={hasHistory ? accentColor : colors.separator}
-            />
-          }
+          icon={<Share2 size={18} color={hasHistory ? accentColor : colors.separator} />}
           label={t('settings.shareHistory')}
           onPress={hasHistory ? onShareHistory : undefined}
         >
-          <ChevronRight
-            size={18}
-            color={hasHistory ? colors.historySubText : colors.separator}
-          />
+          <ChevronRight size={18} color={hasHistory ? colors.historySubText : colors.separator} />
         </SettingRow>
 
         <SettingRow

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
+
 import { formatNumber } from '../calculator/formatNumber';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 import type { HistoryItem } from '../services/historyService';

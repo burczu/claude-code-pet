@@ -87,7 +87,8 @@ const en: TranslationKeys = {
   assistant: {
     emptyState: 'Ask me anything math-related',
     inputPlaceholder: 'e.g. Split $80 between 3 people with 15% tip',
-    outOfScope: "I can only help with calculations and math. Try asking something like \"What's 15% of 200?\"",
+    outOfScope:
+      'I can only help with calculations and math. Try asking something like "What\'s 15% of 200?"',
     useResult: 'Use result',
     showSteps: 'Show working',
     hideSteps: 'Hide working',

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
+
 import { useTheme } from '../theme/restyleTheme';
 
 const CARD_BORDER_RADIUS = 12;

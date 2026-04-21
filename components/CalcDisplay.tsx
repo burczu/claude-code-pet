@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector, PanGesture } from 'react-native-gesture-handler';
+
 import { formatNumber } from '../calculator/formatNumber';
 import { PORTRAIT_SCI_DISPLAY_HEIGHT } from '../calculator/useCalcLayout';
 import { ThemedText, useTheme } from '../theme/restyleTheme';

@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ThemeProvider } from '@shopify/restyle';
 import { Bot, Home, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+
 import { SettingsProvider, useSettings } from './store/SettingsContext';
 import MainScreen from './screens/MainScreen';
 import SettingsScreen from './screens/SettingsScreen';

@@ -1,6 +1,7 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react-native';
+
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 
 interface HistoryHeaderProps {

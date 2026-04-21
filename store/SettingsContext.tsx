@@ -44,9 +44,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       .then((raw) => {
         if (raw) setSettings({ ...DEFAULTS, ...JSON.parse(raw) });
       })
+      .catch(() => {})
       .finally(() => {
         setReady(true);
-        SplashScreen.hideAsync();
+        void SplashScreen.hideAsync();
       });
   }, []);
 

@@ -3,8 +3,13 @@ import { Alert, FlatList, Share, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+
 import { useSettings } from '../store/SettingsContext';
-import { clearHistory, getHistory, HistoryItem as HistoryItemData } from '../services/historyService';
+import {
+  clearHistory,
+  getHistory,
+  HistoryItem as HistoryItemData,
+} from '../services/historyService';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 import HistoryItemRow from '../components/HistoryItemRow';
 import AppearanceSection from '../components/settings/AppearanceSection';
@@ -23,9 +28,11 @@ export default function SettingsScreen() {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      getHistory().then((items) => {
-        if (!cancelled) setHistory(items);
-      });
+      getHistory()
+        .then((items) => {
+          if (!cancelled) setHistory(items);
+        })
+        .catch(() => {});
       return () => {
         cancelled = true;
       };

@@ -105,7 +105,7 @@ export function applyScientific(
       case 'eˣ':
         return new Big(Math.exp(n)).toFixed();
       case '10ˣ': {
-        const r = Math.pow(10, n);
+        const r = 10 ** n;
         return isFinite(r) ? new Big(r).toFixed() : 'Error';
       }
       case 'ln':
@@ -146,13 +146,13 @@ function applyOp(a: Big, b: Big, op: string): Big {
       return a.div(b);
     }
     case 'xʸ': {
-      const r = Math.pow(a.toNumber(), b.toNumber());
+      const r = a.toNumber() ** b.toNumber();
       if (!isFinite(r)) throw new Error();
       return new Big(r);
     }
     case 'y√x': {
       if (a.eq(0)) throw new Error();
-      const r = Math.pow(b.toNumber(), 1 / a.toNumber());
+      const r = b.toNumber() ** (1 / a.toNumber());
       if (!isFinite(r) || isNaN(r)) throw new Error();
       return new Big(r);
     }
@@ -223,12 +223,12 @@ export function evaluate(previous: string, current: string, operator: string): s
       case '÷':
         return b.eq(0) ? 'Error' : a.div(b).toFixed();
       case 'xʸ': {
-        const r = Math.pow(a.toNumber(), b.toNumber());
+        const r = a.toNumber() ** b.toNumber();
         return isFinite(r) ? new Big(r).toFixed() : 'Error';
       }
       case 'y√x': {
         if (a.eq(0)) return 'Error';
-        const r = Math.pow(b.toNumber(), 1 / a.toNumber());
+        const r = b.toNumber() ** (1 / a.toNumber());
         return isFinite(r) && !isNaN(r) ? new Big(r).toFixed() : 'Error';
       }
       default:

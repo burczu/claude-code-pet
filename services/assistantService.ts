@@ -1,7 +1,12 @@
-import { groqClient } from './groqClient';
+import type {
+  ChatCompletionTool,
+  ChatCompletionMessageParam,
+} from 'groq-sdk/resources/chat/completions';
+
 import { evaluateTokens } from '../calculator/mathEngine';
 import type { Token } from '../calculator/mathEngine';
-import type { ChatCompletionTool, ChatCompletionMessageParam } from 'groq-sdk/resources/chat/completions';
+
+import { groqClient } from './groqClient';
 
 export type AssistantMessageRole = 'user' | 'assistant';
 
@@ -173,7 +178,10 @@ function handleUnitConversion(args: {
 
   const factor = UNIT_FACTORS[from]?.[to];
   if (factor === undefined) {
-    return { type: 'error', message: `Don't know how to convert ${args.from_unit} to ${args.to_unit}.` };
+    return {
+      type: 'error',
+      message: `Don't know how to convert ${args.from_unit} to ${args.to_unit}.`,
+    };
   }
   return {
     type: 'result',

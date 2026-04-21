@@ -2,6 +2,7 @@ import { StyleSheet, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Slider from '@react-native-community/slider';
 import { FlaskConical, Hash, Vibrate } from 'lucide-react-native';
+
 import { ThemedText, useTheme } from '../../theme/restyleTheme';
 import SectionCard from '../SectionCard';
 import SettingRow from '../SettingRow';

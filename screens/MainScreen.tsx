@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import CalcButton from '../components/CalcButton';
 import CalcDisplay from '../components/CalcDisplay';
 import ScientificPanel from '../components/ScientificPanel';
@@ -64,12 +65,12 @@ const BUTTONS = [
   },
   { label: '.', type: 'number' as const, action: { type: ACTIONS.ADD_DIGIT, digit: '.' } },
   { label: '=', type: 'operator' as const, action: { type: ACTIONS.EVALUATE } },
-] satisfies Array<{
+] satisfies {
   label: string;
   type: 'number' | 'operator' | 'function';
   wide?: boolean;
   action: CalculatorAction;
-}>;
+}[];
 
 export default function MainScreen() {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
@@ -86,17 +87,18 @@ export default function MainScreen() {
     );
   }, []);
 
+  const initialValue = (route.params as { initialValue?: string } | undefined)?.initialValue;
+
   useEffect(() => {
-    const value = (route.params as { initialValue?: string } | undefined)?.initialValue;
-    if (value) {
+    if (initialValue) {
       dispatch({ type: ACTIONS.CLEAR });
-      String(value)
+      String(initialValue)
         .split('')
         .forEach((digit) => {
           dispatch({ type: ACTIONS.ADD_DIGIT, digit });
         });
     }
-  }, [(route.params as { initialValue?: string } | undefined)?.initialValue]);
+  }, [initialValue]);
 
   const { colors } = useTheme();
 
@@ -108,8 +110,13 @@ export default function MainScreen() {
   const cw = container.width || width - insets.left - insets.right;
   const ch = container.height || height - insets.top - insets.bottom - TAB_BAR_HEIGHT_ESTIMATE;
 
-  const { buttonSize, buttonHeight, sciButtonSize, sciPortraitButtonSize, sciPortraitButtonHeight } =
-    useCalcLayout({ cw, ch, isLandscape, showScientific });
+  const {
+    buttonSize,
+    buttonHeight,
+    sciButtonSize,
+    sciPortraitButtonSize,
+    sciPortraitButtonHeight,
+  } = useCalcLayout({ cw, ch, isLandscape, showScientific });
 
   useHistoryPush(state.current, state.overwrite, state.tokens);
 
