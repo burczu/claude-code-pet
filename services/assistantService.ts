@@ -1,8 +1,7 @@
-import { geminiModel } from './geminiClient';
+import { groqClient } from './groqClient';
 import { evaluateTokens } from '../calculator/mathEngine';
 import type { Token } from '../calculator/mathEngine';
-import { SchemaType, FunctionCallingMode } from '@google/generative-ai';
-import type { Tool, Content } from '@google/generative-ai';
+import type { ChatCompletionTool, ChatCompletionMessageParam } from 'groq-sdk/resources/chat/completions';
 
 export type AssistantMessageRole = 'user' | 'assistant';
 
@@ -18,93 +17,101 @@ export type AssistantResultType =
 
 // ─── Function schemas ────────────────────────────────────────────────────────
 
-const TOOLS: Tool[] = [
+const TOOLS: ChatCompletionTool[] = [
   {
-    functionDeclarations: [
-      {
-        name: 'evaluate_expression',
-        description:
-          'Evaluate a mathematical expression. Use for arithmetic, algebra, percentages, and scientific calculations.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            tokens: {
-              type: SchemaType.ARRAY,
-              description:
-                'The expression as a flat token list. Each token has a "type" ("number", "op", or "paren") and a "value" string. Operators: +, -, ×, ÷.',
-              items: {
-                type: SchemaType.OBJECT,
-                properties: {
-                  type: { type: SchemaType.STRING },
-                  value: { type: SchemaType.STRING },
-                },
+    type: 'function',
+    function: {
+      name: 'evaluate_expression',
+      description:
+        'Evaluate a mathematical expression. Use for arithmetic, algebra, percentages, and scientific calculations.',
+      parameters: {
+        type: 'object',
+        properties: {
+          tokens: {
+            type: 'array',
+            description:
+              'The expression as a flat token list. Each token has a "type" ("number", "op", or "paren") and a "value" string. Operators: +, -, ×, ÷.',
+            items: {
+              type: 'object',
+              properties: {
+                type: { type: 'string' },
+                value: { type: 'string' },
               },
             },
-            steps: {
-              type: SchemaType.ARRAY,
-              description:
-                'Optional step-by-step explanation. Include when the user asks "how", "why", or "explain".',
-              items: { type: SchemaType.STRING },
-            },
           },
-          required: ['tokens'],
-        },
-      },
-      {
-        name: 'split_and_tip',
-        description: 'Split a bill among people, optionally adding a tip.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            total: { type: SchemaType.NUMBER, description: 'The total bill amount.' },
-            people: { type: SchemaType.NUMBER, description: 'Number of people splitting the bill.' },
-            tip_percent: {
-              type: SchemaType.NUMBER,
-              description: 'Tip percentage to add before splitting (0 if no tip).',
-            },
-            steps: {
-              type: SchemaType.ARRAY,
-              description: 'Optional step-by-step breakdown.',
-              items: { type: SchemaType.STRING },
-            },
+          steps: {
+            type: 'array',
+            description:
+              'Optional step-by-step explanation. Include when the user asks "how", "why", or "explain".',
+            items: { type: 'string' },
           },
-          required: ['total', 'people', 'tip_percent'],
         },
+        required: ['tokens'],
       },
-      {
-        name: 'unit_conversion',
-        description: 'Convert a value from one unit to another.',
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            value: { type: SchemaType.NUMBER, description: 'The numeric value to convert.' },
-            from_unit: { type: SchemaType.STRING, description: 'The unit to convert from (e.g. "miles").' },
-            to_unit: { type: SchemaType.STRING, description: 'The unit to convert to (e.g. "kilometers").' },
-            steps: {
-              type: SchemaType.ARRAY,
-              description: 'Optional step-by-step breakdown.',
-              items: { type: SchemaType.STRING },
-            },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'split_and_tip',
+      description: 'Split a bill among people, optionally adding a tip.',
+      parameters: {
+        type: 'object',
+        properties: {
+          total: { type: 'number', description: 'The total bill amount.' },
+          people: { type: 'number', description: 'Number of people splitting the bill.' },
+          tip_percent: {
+            type: 'number',
+            description: 'Tip percentage to add before splitting (0 if no tip).',
           },
-          required: ['value', 'from_unit', 'to_unit'],
-        },
-      },
-      {
-        name: 'out_of_scope',
-        description:
-          "Call this when the user's request is not related to math, calculations, unit conversions, or numerical reasoning.",
-        parameters: {
-          type: SchemaType.OBJECT,
-          properties: {
-            reason: {
-              type: SchemaType.STRING,
-              description: 'Brief internal note on why the request is out of scope.',
-            },
+          steps: {
+            type: 'array',
+            description: 'Optional step-by-step breakdown.',
+            items: { type: 'string' },
           },
-          required: ['reason'],
         },
+        required: ['total', 'people', 'tip_percent'],
       },
-    ],
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'unit_conversion',
+      description: 'Convert a value from one unit to another.',
+      parameters: {
+        type: 'object',
+        properties: {
+          value: { type: 'number', description: 'The numeric value to convert.' },
+          from_unit: { type: 'string', description: 'The unit to convert from (e.g. "miles").' },
+          to_unit: { type: 'string', description: 'The unit to convert to (e.g. "kilometers").' },
+          steps: {
+            type: 'array',
+            description: 'Optional step-by-step breakdown.',
+            items: { type: 'string' },
+          },
+        },
+        required: ['value', 'from_unit', 'to_unit'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'out_of_scope',
+      description:
+        "Call this when the user's request is not related to math, calculations, unit conversions, or numerical reasoning.",
+      parameters: {
+        type: 'object',
+        properties: {
+          reason: {
+            type: 'string',
+            description: 'Brief internal note on why the request is out of scope.',
+          },
+        },
+        required: ['reason'],
+      },
+    },
   },
 ];
 
@@ -189,30 +196,29 @@ export async function sendMessage(
   userMessage: string,
   history: AssistantMessage[],
 ): Promise<AssistantResultType> {
-  // Gemini uses 'model' instead of 'assistant' for the AI role
-  const geminiHistory: Content[] = history.map((m) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  const messages: ChatCompletionMessageParam[] = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+    { role: 'user', content: userMessage },
+  ];
 
   try {
-    const chat = geminiModel.startChat({
-      history: geminiHistory,
+    const response = await groqClient.chat.completions.create({
+      model: 'openai/gpt-oss-120b',
+      messages,
       tools: TOOLS,
-      toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.ANY } },
-      systemInstruction: SYSTEM_PROMPT,
+      tool_choice: 'required',
     });
 
-    const result = await chat.sendMessage(userMessage);
-    const part = result.response.candidates?.[0]?.content?.parts?.[0];
+    const toolCall = response.choices[0]?.message?.tool_calls?.[0];
 
-    if (!part?.functionCall) {
+    if (!toolCall) {
       return { type: 'error', message: 'No response from assistant.' };
     }
 
-    const { name, args } = part.functionCall;
+    const args = JSON.parse(toolCall.function.arguments);
 
-    switch (name) {
+    switch (toolCall.function.name) {
       case 'evaluate_expression':
         return handleEvaluateExpression(args as Parameters<typeof handleEvaluateExpression>[0]);
       case 'split_and_tip':
