@@ -1,13 +1,17 @@
 # Smoke: result persists to history — 7 × 6 = 42
+# Navigate to Settings, back to Home (lets 500ms debounce fire), then return to Settings
 context platform=ios
 open com.anonymous.claude-code-pet --relaunch
-wait 'label="0"' 5000
-press 'label="7" role=button'
-press 'label="×" role=button'
-press 'label="6" role=button'
-press 'label="=" role=button'
-wait 'label="42"' 3000
-press 'label="Settings"'
-wait 'label="HISTORY"' 3000
-is exists 'label="42"'
+wait "label=0" 5000
+press "label=7"
+press "label=×"
+press "label=6"
+press "label=="
+wait "label=42" 3000
+press "label=\"Settings, tab, 3 of 3\""
+press "label=\"Home, tab, 1 of 3\""
+press "label=\"Settings, tab, 3 of 3\""
+scroll down
+wait "label=42" 5000
+is exists "label=42"
 close
