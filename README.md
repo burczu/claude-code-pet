@@ -35,6 +35,17 @@ npx jest           # run once
 npx jest --watch   # watch mode
 ```
 
+## Smoke tests
+
+Smoke tests use [agent-device](https://github.com/callstackincubator/agent-device) to drive the iOS simulator and run automatically before every `git push`.
+
+**Prerequisites:**
+
+1. Build and install the native dev build once: `npx expo run:ios`
+2. Launch the app on the iOS simulator before pushing
+
+The pre-push hook runs `npx agent-device test smoke-tests/` and blocks the push on failure. If the simulator is not running with the app open, the hook will fail with a clear error — start the app first.
+
 ## Tech stack
 
 |              |                                                             |

@@ -9,6 +9,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
+    "smoke": "agent-device test smoke-tests/",
     "prepare": "husky"
   },
   "dependencies": {
@@ -72,6 +73,7 @@
     "@types/react": "~19.1.10",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
+    "agent-device": "^0.12.9",
     "eslint": "^9.39.4",
     "eslint-import-resolver-node": "^0.3.10",
     "eslint-plugin-react": "^7.37.5",

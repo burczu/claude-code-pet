@@ -1,0 +1,12 @@
+# Smoke: basic arithmetic — 12 + 3 = 15
+context platform=ios
+open com.anonymous.claude-code-pet --relaunch
+wait 'label="0"' 5000
+press 'label="1" role=button'
+press 'label="2" role=button'
+press 'label="+" role=button'
+press 'label="3" role=button'
+press 'label="=" role=button'
+wait 'label="15"' 3000
+is exists 'label="15"'
+close

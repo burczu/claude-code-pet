@@ -1,0 +1,13 @@
+# Smoke: result persists to history — 7 × 6 = 42
+context platform=ios
+open com.anonymous.claude-code-pet --relaunch
+wait 'label="0"' 5000
+press 'label="7" role=button'
+press 'label="×" role=button'
+press 'label="6" role=button'
+press 'label="=" role=button'
+wait 'label="42"' 3000
+press 'label="Settings"'
+wait 'label="HISTORY"' 3000
+is exists 'label="42"'
+close
