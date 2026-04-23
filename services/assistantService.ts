@@ -304,6 +304,7 @@ export async function sendMessage(
 ): Promise<AssistantResultType> {
   const messages: ChatCompletionMessageParam[] = [
     { role: 'system', content: SYSTEM_PROMPT },
+    ...FEW_SHOT_EXAMPLES,
     ...history.map((m) => ({ role: m.role, content: m.content })),
     { role: 'user', content: userMessage },
   ];
