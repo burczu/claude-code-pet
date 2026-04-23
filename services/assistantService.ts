@@ -190,6 +190,104 @@ function handleUnitConversion(args: {
   };
 }
 
+// ─── Few-shot examples ───────────────────────────────────────────────────────
+
+const FEW_SHOT_EXAMPLES: ChatCompletionMessageParam[] = [
+  // evaluate_expression — with steps
+  {
+    role: 'user',
+    content: 'What is 15% of 80?',
+  },
+  {
+    role: 'assistant',
+    content: null,
+    tool_calls: [
+      {
+        id: 'ex1',
+        type: 'function',
+        function: {
+          name: 'evaluate_expression',
+          arguments: JSON.stringify({
+            tokens: [
+              { type: 'number', value: '80' },
+              { type: 'op', value: '×' },
+              { type: 'number', value: '0.15' },
+            ],
+            steps: ['Convert 15% to decimal: 15 ÷ 100 = 0.15', '80 × 0.15 = 12'],
+          }),
+        },
+      },
+    ],
+  },
+  // split_and_tip
+  {
+    role: 'user',
+    content: 'Split a $120 bill 4 ways with 18% tip.',
+  },
+  {
+    role: 'assistant',
+    content: null,
+    tool_calls: [
+      {
+        id: 'ex2',
+        type: 'function',
+        function: {
+          name: 'split_and_tip',
+          arguments: JSON.stringify({
+            total: 120,
+            people: 4,
+            tip_percent: 18,
+          }),
+        },
+      },
+    ],
+  },
+  // unit_conversion
+  {
+    role: 'user',
+    content: 'How many kilometers is 5 miles?',
+  },
+  {
+    role: 'assistant',
+    content: null,
+    tool_calls: [
+      {
+        id: 'ex3',
+        type: 'function',
+        function: {
+          name: 'unit_conversion',
+          arguments: JSON.stringify({
+            value: 5,
+            from_unit: 'miles',
+            to_unit: 'kilometers',
+          }),
+        },
+      },
+    ],
+  },
+  // out_of_scope
+  {
+    role: 'user',
+    content: 'What is the capital of France?',
+  },
+  {
+    role: 'assistant',
+    content: null,
+    tool_calls: [
+      {
+        id: 'ex4',
+        type: 'function',
+        function: {
+          name: 'out_of_scope',
+          arguments: JSON.stringify({
+            reason: 'Geography question, not related to math or calculations.',
+          }),
+        },
+      },
+    ],
+  },
+];
+
 // ─── System prompt ────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT =
