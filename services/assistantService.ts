@@ -4,7 +4,7 @@ import type {
 } from 'groq-sdk/resources/chat/completions';
 
 import { evaluateTokens } from '../calculator/mathEngine';
-import type { Token } from '../calculator/mathEngine';
+import type { Token, AngleMode } from '../calculator/mathEngine';
 
 import { groqClient } from './groqClient';
 
@@ -298,12 +298,30 @@ const SYSTEM_PROMPT =
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+export interface CalcContext {
+  currentValue: string;
+  angleMode: AngleMode;
+  recentHistory: string[];
+}
+
+function buildSystemMessage(context?: CalcContext): string {
+  if (!context) return SYSTEM_PROMPT;
+  const history = context.recentHistory.length > 0 ? context.recentHistory.join(', ') : 'none';
+  return (
+    `${SYSTEM_PROMPT}\n\nCALCULATOR STATE:\n` +
+    `current_value: ${context.currentValue}\n` +
+    `angle_mode: ${context.angleMode}\n` +
+    `recent_history: [${history}]`
+  );
+}
+
 export async function sendMessage(
   userMessage: string,
   history: AssistantMessage[],
+  context?: CalcContext,
 ): Promise<AssistantResultType> {
   const messages: ChatCompletionMessageParam[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: buildSystemMessage(context) },
     ...FEW_SHOT_EXAMPLES,
     ...history.map((m) => ({ role: m.role, content: m.content })),
     { role: 'user', content: userMessage },
