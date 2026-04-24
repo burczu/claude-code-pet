@@ -4,10 +4,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
-import { sendMessage, AssistantMessage } from '../services/assistantService';
-import { pushHistory } from '../services/historyService';
+import { sendMessage, AssistantMessage, CalcContext } from '../services/assistantService';
+import { pushHistory, getHistory } from '../services/historyService';
 import { formatNumber } from '../calculator/formatNumber';
 import { useSettings } from '../store/SettingsContext';
+import { useCalcState } from '../store/CalcStateContext';
 import { ThemedText, useTheme } from '../theme/restyleTheme';
 import MessageBubble from '../components/assistant/MessageBubble';
 import ChatInput from '../components/assistant/ChatInput';
@@ -30,6 +31,7 @@ export default function AssistantScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { settings } = useSettings();
+  const { calcState } = useCalcState();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -43,7 +45,13 @@ export default function AssistantScreen() {
       setMessages((prev) => [...prev, userMsg]);
       setLoading(true);
 
-      const result = await sendMessage(text, historyRef.current);
+      const recentItems = await getHistory();
+      const context: CalcContext = {
+        currentValue: calcState.current,
+        angleMode: calcState.angleMode,
+        recentHistory: recentItems.slice(-3).map((item) => `${item.equation}=${item.result}`),
+      };
+      const result = await sendMessage(text, historyRef.current, context);
 
       let assistantMsg: DisplayMessage;
 
@@ -80,7 +88,7 @@ export default function AssistantScreen() {
       setLoading(false);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     },
-    [t, settings.precision],
+    [t, settings.precision, calcState],
   );
 
   const handleUseResult = useCallback(
