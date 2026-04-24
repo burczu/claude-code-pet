@@ -9,6 +9,7 @@ import { Bot, Home, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { SettingsProvider, useSettings } from './store/SettingsContext';
+import { CalcStateProvider } from './store/CalcStateContext';
 import MainScreen from './screens/MainScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import AssistantScreen from './screens/AssistantScreen';
@@ -83,7 +84,9 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SettingsProvider>
-        <AppNavigator />
+        <CalcStateProvider>
+          <AppNavigator />
+        </CalcStateProvider>
       </SettingsProvider>
     </GestureHandlerRootView>
   );

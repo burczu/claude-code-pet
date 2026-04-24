@@ -9,6 +9,7 @@ import ScientificPanel from '../components/ScientificPanel';
 import { ACTIONS, CalculatorAction, calculatorReducer, initialState } from '../calculator/reducer';
 import { formatNumber } from '../calculator/formatNumber';
 import { useSettings } from '../store/SettingsContext';
+import { useCalcState } from '../store/CalcStateContext';
 import { GAP, useCalcLayout } from '../calculator/useCalcLayout';
 import { useHistoryPush } from '../calculator/useHistoryPush';
 import { useSwipeToDelete } from '../calculator/useSwipeToDelete';
@@ -76,6 +77,12 @@ export default function MainScreen() {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
   const { width, height } = useWindowDimensions();
   const { settings } = useSettings();
+  const { setCalcState } = useCalcState();
+  const { current, angleMode } = state;
+
+  useEffect(() => {
+    setCalcState({ current, angleMode });
+  }, [current, angleMode, setCalcState]);
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const [container, setContainer] = useState({ width: 0, height: 0 });
